@@ -1,5 +1,6 @@
 ﻿import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
+import Hyperspeed from './components/Hyperspeed.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
@@ -13,77 +14,92 @@ import Leaderboard from './pages/Leaderboard.jsx';
 import Profile from './pages/Profile.jsx';
 
 const App = () => (
-  <div className="min-h-screen bg-slate-950 text-white">
-    <Navbar />
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <StudentDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute roles={['admin']}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/courses"
-        element={
-          <ProtectedRoute>
-            <CourseList />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/courses/:id"
-        element={
-          <ProtectedRoute>
-            <CoursePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/lessons/:id"
-        element={
-          <ProtectedRoute>
-            <Lesson />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/quiz/:id"
-        element={
-          <ProtectedRoute>
-            <QuizPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/leaderboard"
-        element={
-          <ProtectedRoute>
-            <Leaderboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+  <div className="relative min-h-screen bg-midnight text-white overflow-hidden">
+    {/* Global hyperspeed background for all pages */}
+    <Hyperspeed presetKey="neoAurora" />
+
+    {/* Subtle overlay grid and glow on top of hyperspeed */}
+    <div className="pointer-events-none absolute inset-0 bg-hero-grid opacity-30 [background-size:120px_120px]" aria-hidden />
+    <div
+      className="pointer-events-none absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-gradient-to-r from-primary/30 via-accent/20 to-rose-500/30 blur-[140px]"
+      aria-hidden
+    />
+    <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-midnight/60 to-black/80" aria-hidden />
+
+    <div className="relative z-10 flex min-h-screen flex-col">
+      <Navbar />
+      <div className="flex-1">
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/courses"
+            element={
+              <ProtectedRoute>
+                <CourseList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/courses/:id"
+            element={
+              <ProtectedRoute>
+                <CoursePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/lessons/:id"
+            element={
+              <ProtectedRoute>
+                <Lesson />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quiz/:id"
+            element={
+              <ProtectedRoute>
+                <QuizPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leaderboard"
+            element={
+              <ProtectedRoute>
+                <Leaderboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </div>
   </div>
 );
 

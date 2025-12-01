@@ -47,6 +47,6 @@ export const createLesson = async (req, res) => {
 };
 
 export const getLesson = async (req, res) => {
-  const lesson = await Lesson.findById(req.params.lessonId).populate('quiz');
+  const lesson = await Lesson.findById(req.params.id).populate('quiz');
   res.json(lesson);
 };

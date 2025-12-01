@@ -10,8 +10,9 @@ A production-ready MERN stack platform featuring gamified learning, role-based d
 ### Backend
 ```bash
 cd backend
-cp .env.example .env
+cp env.example .env
 npm install
+# Set CLIENT_URL or CLIENT_URLS in .env to match your frontend
 npm run seed
 npm run dev
 ```

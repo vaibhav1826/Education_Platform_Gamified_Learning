@@ -3,7 +3,8 @@ import Badge from '../models/Badge.js';
 import { updateLeaderboard } from '../controllers/leaderboardController.js';
 
 const XP_RULES = {
-  daily_login: 5,
+  // Daily login XP is intentionally low and awarded at most once per calendar day
+  daily_login: 1,
   correct_answer: 10,
   quiz_complete: 50
 };
@@ -19,20 +20,27 @@ const awardBadge = async (user, criteria) => {
 
 const handleStreaks = async (user) => {
   const now = new Date();
+  let shouldAwardDailyLoginXp = false;
+
   if (!user.streak.lastLogin) {
     user.streak.count = 1;
+    shouldAwardDailyLoginXp = true;
   } else {
     const last = new Date(user.streak.lastLogin);
     const diffDays = Math.floor((now - last) / (1000 * 60 * 60 * 24));
     if (diffDays === 1) {
       user.streak.count += 1;
+      shouldAwardDailyLoginXp = true;
     } else if (diffDays > 1) {
       user.streak.count = 1;
+      shouldAwardDailyLoginXp = true;
     }
   }
   user.streak.lastLogin = now;
   if (user.streak.count === 5) await awardBadge(user, '5_day_streak');
   if (user.streak.count === 10) await awardBadge(user, '10_day_streak');
+
+  return shouldAwardDailyLoginXp;
 };
 
 const addXP = (user, amount) => {
@@ -46,8 +54,9 @@ export const applyGamificationEvent = async (userDoc, event, meta = {}) => {
   const user = await User.findById(userDoc._id).populate('badges');
   switch (event) {
     case 'daily_login':
-      await handleStreaks(user);
-      addXP(user, XP_RULES.daily_login);
+      if (await handleStreaks(user)) {
+        addXP(user, XP_RULES.daily_login);
+      }
       break;
     case 'quiz_complete':
       addXP(user, XP_RULES.quiz_complete);
