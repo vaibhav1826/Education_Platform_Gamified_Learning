@@ -1,10 +1,11 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useAuthContext } from '../context/AuthContext.jsx';
 import useStreak from '../hooks/useStreak.js';
 import { Award, Zap, Trophy, TrendingUp, Star, Flame, Mail, User, Shield } from 'lucide-react';
+import api from '../api/index.js';
 
 const Profile = () => {
-  const { user } = useAuthContext();
+  const { user, setUser } = useAuthContext();
   const streak = useStreak();
 
   const [animatedXP, setAnimatedXP] = useState(0);
@@ -12,6 +13,9 @@ const Profile = () => {
   const [animatedStreak, setAnimatedStreak] = useState(0);
   const [hoveredBadge, setHoveredBadge] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Animate numbers on mount
   useEffect(() => {
@@ -78,8 +82,75 @@ const Profile = () => {
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-16 h-16 bg-gradient-to-br from-slate-700 to-slate-800 rounded-full flex items-center justify-center border-2 border-slate-600 shadow-lg transform hover:scale-110 transition-transform duration-300">
-                  <User className="w-8 h-8 text-slate-300" />
+                <div className="relative h-16 w-16">
+                  <div className="w-16 h-16 rounded-full border-2 border-slate-600 bg-slate-800 overflow-hidden flex items-center justify-center shadow-lg">
+                    {preview || user.profileImage ? (
+                      <img
+                        src={preview || user.profileImage}
+                        alt={user.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-lg font-semibold text-slate-200">
+                        {user.name?.charAt(0)?.toUpperCase() || <User className="w-8 h-8 text-slate-300" />}
+                      </span>
+                    )}
+                  </div>
+                  <div className="absolute -bottom-3 left-1/2 flex -translate-x-1/2 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-900 shadow hover:bg-white"
+                    >
+                      {uploading ? 'Saving…' : 'Change'}
+                    </button>
+                    {user.profileImage && !uploading && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setUploading(true);
+                          try {
+                            const { data: updated } = await api.patch('/users/me/profile-image', {
+                              profileImage: ''
+                            });
+                            setPreview(null);
+                            setUser(updated);
+                          } finally {
+                            setUploading(false);
+                          }
+                        }}
+                        className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-200 border border-slate-500 hover:bg-slate-700"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const localUrl = URL.createObjectURL(file);
+                      setPreview(localUrl);
+                      setUploading(true);
+                      try {
+                        const formData = new FormData();
+                        formData.append('image', file);
+                        const { data: upload } = await api.post('/uploads/profile', formData, {
+                          headers: { 'Content-Type': 'multipart/form-data' }
+                        });
+                        const { data: updated } = await api.patch('/users/me/profile-image', {
+                          profileImage: upload.url
+                        });
+                        setUser(updated);
+                      } finally {
+                        setUploading(false);
+                      }
+                    }}
+                  />
                 </div>
                 <div>
                   <h2 className="text-4xl font-bold text-white">

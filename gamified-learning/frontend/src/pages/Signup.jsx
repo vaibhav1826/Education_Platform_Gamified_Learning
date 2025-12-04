@@ -7,7 +7,15 @@ import { useAuthContext } from '../context/AuthContext.jsx';
 const Signup = () => {
   const navigate = useNavigate();
   const { signup, loginWithGoogle } = useAuthContext();
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'student' });
+  const [role, setRole] = useState('student');
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    city: '',
+    phone: '',
+    avatar: ''
+  });
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -16,8 +24,12 @@ const Signup = () => {
     setIsLoading(true);
     setError(null);
     try {
-      await signup(form);
-      navigate('/');
+      const payload = { ...form, role };
+      const data = await signup(payload);
+      const userRole = data?.user?.role;
+      if (userRole === 'teacher') navigate('/teacher');
+      else if (userRole === 'admin') navigate('/admin');
+      else navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to signup');
     } finally {
@@ -27,8 +39,11 @@ const Signup = () => {
 
   const handleGoogleSuccess = async (response) => {
     try {
-      await loginWithGoogle({ credential: response.credential, role: form.role });
-      navigate('/');
+      const data = await loginWithGoogle({ credential: response.credential, role });
+      const userRole = data?.user?.role;
+      if (userRole === 'teacher') navigate('/teacher');
+      else if (userRole === 'admin') navigate('/admin');
+      else navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Google signup failed');
     }
@@ -59,7 +74,9 @@ const Signup = () => {
               transition={{ delay: 0.2 }}
               className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 text-glow"
             >
-              Create Account
+              {role === 'student' && 'Create Student Account'}
+              {role === 'teacher' && 'Create Teacher Account'}
+              {role === 'admin' && 'Create Admin Account'}
             </motion.h2>
             <motion.p
               initial={{ opacity: 0 }}
@@ -123,26 +140,62 @@ const Signup = () => {
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                 />
               </motion.div>
+
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.7 }}
-                className="grid grid-cols-2 gap-3"
+                className="grid grid-cols-3 gap-3"
               >
-                {['student', 'teacher'].map((role) => (
+                {['student', 'teacher', 'admin'].map((r) => (
                   <button
-                    key={role}
+                    key={r}
                     type="button"
-                    onClick={() => setForm({ ...form, role })}
+                    onClick={() => setRole(r)}
                     className={`rounded-xl border px-4 py-3 text-sm font-semibold capitalize transition ${
-                      form.role === role
+                      role === r
                         ? 'border-pink-500/70 bg-pink-500/10 text-white'
                         : 'border-white/10 bg-black/30 text-slate-400'
                     }`}
                   >
-                    {role}
+                    {r}
                   </button>
                 ))}
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.8 }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              >
+                <input
+                  className="w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm outline-none placeholder:text-slate-500 focus:border-pink-500/50 input-glow transition-all duration-300"
+                  placeholder="City"
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                />
+                <input
+                  className="w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm outline-none placeholder:text-slate-500 focus:border-pink-500/50 input-glow transition-all duration-300"
+                  placeholder="Mobile Number"
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.9 }}
+              >
+                <input
+                  className="w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm outline-none placeholder:text-slate-500 focus:border-pink-500/50 input-glow transition-all duration-300"
+                  placeholder="Profile photo URL (optional)"
+                  type="url"
+                  value={form.avatar}
+                  onChange={(e) => setForm({ ...form, avatar: e.target.value })}
+                />
               </motion.div>
             </div>
 

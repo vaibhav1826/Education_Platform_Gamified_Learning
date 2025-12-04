@@ -16,8 +16,11 @@ const Login = () => {
     setIsLoading(true);
     setError(null);
     try {
-      await login({ email: form.email, password: form.password });
-      navigate('/');
+      const data = await login({ email: form.email, password: form.password, role: form.role });
+      const role = data?.user?.role;
+      if (role === 'teacher') navigate('/teacher/dashboard');
+      else if (role === 'admin') navigate('/admin/dashboard');
+      else navigate('/student/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to login');
     } finally {
@@ -27,8 +30,11 @@ const Login = () => {
 
   const handleGoogleSuccess = async (response) => {
     try {
-      await loginWithGoogle({ credential: response.credential, role: form.role });
-      navigate('/');
+      const data = await loginWithGoogle({ credential: response.credential, role: form.role });
+      const role = data?.user?.role;
+      if (role === 'teacher') navigate('/teacher/dashboard');
+      else if (role === 'admin') navigate('/admin/dashboard');
+      else navigate('/student/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Google sign-in failed');
     }
@@ -116,9 +122,9 @@ const Login = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.55 }}
-              className="grid grid-cols-2 gap-3 text-sm"
+              className="grid grid-cols-3 gap-3 text-sm"
             >
-              {['student', 'teacher'].map((role) => (
+              {['student', 'teacher', 'admin'].map((role) => (
                 <button
                   key={role}
                   type="button"

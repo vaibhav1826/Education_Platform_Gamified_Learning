@@ -2,10 +2,21 @@
 import Navbar from './components/Navbar.jsx';
 import Hyperspeed from './components/Hyperspeed.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import AdminLayout from './components/admin/AdminLayout.jsx';
 import Login from './pages/Login.jsx';
-import Signup from './pages/Signup.jsx';
+import ChooseRole from './pages/ChooseRole.jsx';
+import StudentSignup from './pages/signup/StudentSignup.jsx';
+import TeacherSignup from './pages/signup/TeacherSignup.jsx';
+import AdminSignup from './pages/signup/AdminSignup.jsx';
 import StudentDashboard from './pages/StudentDashboard.jsx';
 import TeacherDashboard from './pages/TeacherDashboard.jsx';
+import AdminDashboard from './pages/admin/AdminDashboard.jsx';
+import AdminUsers from './pages/admin/AdminUsers.jsx';
+import AdminCourses from './pages/admin/AdminCourses.jsx';
+import AdminGamification from './pages/admin/AdminGamification.jsx';
+import AdminLeaderboard from './pages/admin/AdminLeaderboard.jsx';
+import AdminReports from './pages/admin/AdminReports.jsx';
+import AdminSettings from './pages/admin/AdminSettings.jsx';
 import CourseList from './pages/CourseList.jsx';
 import CoursePage from './pages/CoursePage.jsx';
 import Lesson from './pages/Lesson.jsx';
@@ -31,23 +42,44 @@ const App = () => (
       <div className="flex-1">
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/choose-role" element={<ChooseRole />} />
+          <Route path="/signup" element={<Navigate to="/choose-role" replace />} />
+          <Route path="/signup/student" element={<StudentSignup />} />
+          <Route path="/signup/teacher" element={<TeacherSignup />} />
+          <Route path="/signup/admin" element={<AdminSignup />} />
           <Route
-            path="/"
+            path="/student/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute roles={['student']}>
                 <StudentDashboard />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/teacher"
+            path="/teacher/dashboard"
             element={
               <ProtectedRoute roles={['teacher', 'admin']}>
                 <TeacherDashboard />
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="courses" element={<AdminCourses />} />
+            <Route path="gamification" element={<AdminGamification />} />
+            <Route path="leaderboard" element={<AdminLeaderboard />} />
+            <Route path="reports" element={<AdminReports />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
           <Route
             path="/courses"
             element={
@@ -96,7 +128,8 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
         </Routes>
       </div>
     </div>

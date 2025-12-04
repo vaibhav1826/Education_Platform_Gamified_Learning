@@ -5,7 +5,8 @@ import Badge from '../models/Badge.js';
 import { generateTokens, attachRefreshToken, clearRefreshToken } from '../utils/token.js';
 import { applyGamificationEvent } from '../utils/gamification.js';
 
-const ROLE_OPTIONS = ['student', 'teacher'];
+const ROLE_OPTIONS = ['student', 'teacher', 'admin'];
+const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || 'dev-admin-secret';
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClient = googleClientId ? new OAuth2Client(googleClientId) : null;
 
@@ -25,7 +26,8 @@ const assertRoleSelection = (role) => {
 };
 
 export const signup = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, city, phone, avatar, profileImage, specialization, experience, secretKey } =
+    req.body;
   assertRoleSelection(role);
 
   if (!password || password.length < 8) {
@@ -36,17 +38,40 @@ export const signup = async (req, res) => {
     return res.status(400).json({ message: 'Password must include upper, lower case letters and numbers.' });
   }
 
+  if (role === 'teacher') {
+    if (!specialization || typeof specialization !== 'string') {
+      return res.status(400).json({ message: 'Specialization is required for teachers.' });
+    }
+    if (experience === undefined || experience === null || Number.isNaN(Number(experience))) {
+      return res.status(400).json({ message: 'Experience is required for teachers.' });
+    }
+  }
+
+  if (role === 'admin') {
+    if (!secretKey || secretKey !== ADMIN_SECRET) {
+      return res.status(403).json({ message: 'Invalid admin secret key.' });
+    }
+  }
+
   const normalizedEmail = normalizeEmail(email);
   const existing = await User.findOne({ email: normalizedEmail });
   if (existing) {
     return res.status(409).json({ message: 'Account already exists. Use login or Google sign-in.' });
   }
 
+  const image = (profileImage || avatar)?.trim();
+
   const user = await User.create({
     name: name?.trim(),
     email: normalizedEmail,
     password,
     role,
+    city: city?.trim() || undefined,
+    phone: phone?.trim() || undefined,
+    specialization: specialization?.trim() || undefined,
+    experience: experience !== undefined && experience !== null ? Number(experience) : undefined,
+    avatar: image || undefined,
+    profileImage: image || undefined,
     authProvider: 'credentials'
   });
 
@@ -57,10 +82,16 @@ export const signup = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
+  assertRoleSelection(role);
+
   const user = await User.findOne({ email: normalizeEmail(email) }).populate('badges');
   if (!user || !(await user.matchPassword(password))) {
     return res.status(401).json({ message: 'Invalid credentials' });
+  }
+
+  if (user.role !== role) {
+    return res.status(400).json({ message: `Account is registered as ${user.role}. Please switch role.` });
   }
 
   if (user.authProvider !== 'credentials') {
@@ -101,6 +132,7 @@ export const googleAuth = async (req, res) => {
       email: normalizedEmail,
       googleId: payload.sub,
       avatar: payload.picture,
+      profileImage: payload.picture,
       role,
       authProvider: 'google'
     });
