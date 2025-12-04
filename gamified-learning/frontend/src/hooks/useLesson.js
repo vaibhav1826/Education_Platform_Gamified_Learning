@@ -11,11 +11,17 @@ const useLesson = (lessonId) => {
     setLesson(data);
   }, [api, lessonId]);
 
+  const completeLesson = useCallback(async () => {
+    if (!lessonId) return null;
+    const { data } = await api.post(`/lessons/${lessonId}/complete`);
+    return data;
+  }, [api, lessonId]);
+
   useEffect(() => {
     fetchLesson();
   }, [fetchLesson]);
 
-  return { lesson };
+  return { lesson, completeLesson, refetch: fetchLesson };
 };
 
 export default useLesson;

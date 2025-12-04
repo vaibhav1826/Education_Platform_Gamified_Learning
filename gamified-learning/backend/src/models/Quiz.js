@@ -3,9 +3,15 @@
 const quizSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
-    questions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Question' }],
+    description: String,
     lesson: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' },
-    timeLimit: { type: Number, default: 300 }
+    course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
+    questions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Question' }],
+    timeLimit: { type: Number, default: 300 }, // seconds
+    autoGrade: { type: Boolean, default: true },
+    passingScore: { type: Number, default: 70 },
+    totalPoints: { type: Number, default: 0 },
+    status: { type: String, enum: ['draft', 'published'], default: 'draft' }
   },
   { timestamps: true }
 );

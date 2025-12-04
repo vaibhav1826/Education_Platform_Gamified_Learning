@@ -37,15 +37,16 @@ const useQuiz = (quizId) => {
     dispatch({ type: 'ANSWER', payload: { id: questionId, answer } });
   }, []);
 
-  const submitQuiz = useCallback(async (courseId) => {
+  const submitQuiz = useCallback(async () => {
+    if (!state.quiz) return null;
     dispatch({ type: 'FINISH' });
     const payload = {
-      courseId,
+      courseId: state.quiz?.course?._id || state.quiz?.course,
       answers: Object.entries(state.answers).map(([questionId, answer]) => ({ questionId, answer }))
     };
     const { data } = await api.post(`/quizzes/${quizId}/submit`, payload);
     return data;
-  }, [api, quizId, state.answers]);
+  }, [api, quizId, state.answers, state.quiz]);
 
   useEffect(() => {
     fetchQuiz();

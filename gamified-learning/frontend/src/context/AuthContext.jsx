@@ -20,7 +20,7 @@ const reducer = (state, action) => {
 
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { initAuth, login, signup, logout } = useAuth();
+  const { initAuth, login, signup, loginWithGoogle, logout } = useAuth();
 
   useEffect(() => {
     let mounted = true;
@@ -46,13 +46,20 @@ export const AuthProvider = ({ children }) => {
     if (data) dispatch({ type: 'LOGIN', payload: data });
   }, [signup]);
 
+  const handleGoogle = useCallback(async (payload) => {
+    const data = await loginWithGoogle(payload);
+    if (data) dispatch({ type: 'LOGIN', payload: data });
+  }, [loginWithGoogle]);
+
   const handleLogout = useCallback(async () => {
     await logout();
     dispatch({ type: 'LOGOUT' });
   }, [logout]);
 
   return (
-    <AuthContext.Provider value={{ ...state, login: handleLogin, signup: handleSignup, logout: handleLogout }}>
+    <AuthContext.Provider
+      value={{ ...state, login: handleLogin, signup: handleSignup, loginWithGoogle: handleGoogle, logout: handleLogout }}
+    >
       {children}
     </AuthContext.Provider>
   );

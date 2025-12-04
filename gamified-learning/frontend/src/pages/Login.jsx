@@ -1,25 +1,36 @@
 ﻿import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuthContext } from '../context/AuthContext.jsx';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuthContext();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const { login, loginWithGoogle } = useAuthContext();
+  const [form, setForm] = useState({ email: '', password: '', role: 'student' });
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
     try {
-      await login(form);
+      await login({ email: form.email, password: form.password });
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to login');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (response) => {
+    try {
+      await loginWithGoogle({ credential: response.credential, role: form.role });
+      navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Google sign-in failed');
     }
   };
 
@@ -101,6 +112,28 @@ const Login = () => {
               </motion.div>
             </div>
 
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.55 }}
+              className="grid grid-cols-2 gap-3 text-sm"
+            >
+              {['student', 'teacher'].map((role) => (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => setForm({ ...form, role })}
+                  className={`rounded-xl border px-4 py-3 font-semibold capitalize transition ${
+                    form.role === role
+                      ? 'border-cyan-500/70 bg-cyan-500/10 text-white'
+                      : 'border-white/10 bg-black/30 text-slate-400'
+                  }`}
+                >
+                  {role}
+                </button>
+              ))}
+            </motion.div>
+
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -112,6 +145,16 @@ const Login = () => {
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </motion.button>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+              className="flex flex-col items-center gap-3 text-sm text-slate-400"
+            >
+              <span>or continue with</span>
+              <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setError('Google sign-in failed')} />
+            </motion.div>
           </form>
         </motion.div>
       </div>

@@ -1,18 +1,20 @@
 ﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuthContext } from '../context/AuthContext.jsx';
 
 const Signup = () => {
   const navigate = useNavigate();
-  const { signup } = useAuthContext();
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const { signup, loginWithGoogle } = useAuthContext();
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'student' });
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
     try {
       await signup(form);
       navigate('/');
@@ -20,6 +22,15 @@ const Signup = () => {
       setError(err.response?.data?.message || 'Unable to signup');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (response) => {
+    try {
+      await loginWithGoogle({ credential: response.credential, role: form.role });
+      navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Google signup failed');
     }
   };
 
@@ -112,19 +123,50 @@ const Signup = () => {
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                 />
               </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.7 }}
+                className="grid grid-cols-2 gap-3"
+              >
+                {['student', 'teacher'].map((role) => (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => setForm({ ...form, role })}
+                    className={`rounded-xl border px-4 py-3 text-sm font-semibold capitalize transition ${
+                      form.role === role
+                        ? 'border-pink-500/70 bg-pink-500/10 text-white'
+                        : 'border-white/10 bg-black/30 text-slate-400'
+                    }`}
+                  >
+                    {role}
+                  </button>
+                ))}
+              </motion.div>
             </div>
 
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
+              transition={{ delay: 0.8 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               disabled={isLoading}
               className="w-full rounded-xl bg-gradient-to-r from-pink-600 to-indigo-600 py-4 text-sm font-bold text-white shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Creating Account...' : 'Sign Up'}
+              {isLoading ? 'Creating Account...' : 'Create account'}
             </motion.button>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9 }}
+              className="flex flex-col items-center gap-3 text-sm text-slate-400"
+            >
+              <span>or continue with</span>
+              <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setError('Google signup failed')} />
+            </motion.div>
           </form>
         </motion.div>
       </div>

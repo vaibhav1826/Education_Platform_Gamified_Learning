@@ -26,6 +26,15 @@ npm run dev
 
 Visit `http://localhost:5173` and ensure the backend runs on `http://localhost:5000`.
 
+Set the following variables in `backend/.env` and `frontend/.env` (create if missing):
+
+```
+GOOGLE_CLIENT_ID=<your-google-oauth-client-id>
+GOOGLE_CLIENT_SECRET=<server-secret>
+VITE_API_URL=http://localhost:5000
+VITE_GOOGLE_CLIENT_ID=<same as GOOGLE_CLIENT_ID>
+```
+
 ## Docker Backend
 ```bash
 cd backend
@@ -43,10 +52,12 @@ Use the HTTP collection under `backend/tests/api.http` with VS Code REST client 
 
 ## Features
 - JWT auth with refresh tokens stored as HTTP-only cookies
-- Role-based admin/student dashboards
-- Courses, modules, lessons, quizzes CRUD
+- Dual-role signup (student/teacher) plus Google OAuth onboarding
+- Role-based dashboards with teacher analytics, course builder, and student progress insights
+- Courses, modules, lessons, quizzes CRUD with MCQ/True-False/Short Answer support and timers
 - Gamification engine (XP, level formula, streak badges, achievements)
 - Real-time leaderboard powered by Socket.io
+- In-app announcements + notification center with real-time quiz result broadcasts
 - Certificate PDF generator for course completion
 - Custom React hooks: auth, API, gamification, quiz, streak, debounce, socket
 - Professional Tailwind UI with Framer Motion micro-interactions
