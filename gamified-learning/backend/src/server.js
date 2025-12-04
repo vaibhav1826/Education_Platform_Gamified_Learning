@@ -2,6 +2,7 @@
 import cors from 'cors';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
+import { errors as celebrateErrors } from 'celebrate';
 import 'express-async-errors';
 import authRoutes from './routes/authRoutes.js';
 import courseRoutes from './routes/courseRoutes.js';
@@ -10,6 +11,8 @@ import quizRoutes from './routes/quizRoutes.js';
 import gamificationRoutes from './routes/gamificationRoutes.js';
 import leaderboardRoutes from './routes/leaderboardRoutes.js';
 import certificateRoutes from './routes/certificateRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -44,7 +47,10 @@ app.use('/api/quizzes', quizRoutes);
 app.use('/api/gamification', gamificationRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/certificates', certificateRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/notifications', notificationRoutes);
 
+app.use(celebrateErrors());
 app.use(notFound);
 app.use(errorHandler);
 

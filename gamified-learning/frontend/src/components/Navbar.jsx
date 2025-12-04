@@ -1,6 +1,7 @@
 ﻿import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthContext } from '../context/AuthContext.jsx';
+import NotificationBell from './NotificationBell.jsx';
 
 const Navbar = () => {
   const { user, logout } = useAuthContext();
@@ -14,7 +15,7 @@ const Navbar = () => {
   const linkClasses = 'text-sm font-semibold text-slate-300 transition hover:text-white hover:drop-shadow-glow';
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-black/30 backdrop-blur-2xl">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-black/40 backdrop-blur-2xl">
       <motion.nav
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -23,7 +24,7 @@ const Navbar = () => {
       >
         <Link to="/" className="group flex items-center gap-3 text-lg font-display tracking-wide">
           <span className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent text-white shadow-neon">
-            <span className="absolute inset-0 rounded-2xl border border-white/20 opacity-50 group-hover:opacity-90 transition" />
+            <span className="absolute inset-0 rounded-2xl border border-white/20 opacity-50 transition group-hover:opacity-90" />
             GL
           </span>
           <div>
@@ -33,15 +34,30 @@ const Navbar = () => {
             </span>
           </div>
         </Link>
+
         <div className="flex items-center gap-4">
           {user ? (
             <>
-              <Link to="/courses" className={linkClasses}>Courses</Link>
-              <Link to="/leaderboard" className={linkClasses}>Leaderboard</Link>
-              <Link to="/profile" className={linkClasses}>Profile</Link>
-              {user.role === 'admin' && (
-                <Link to="/admin" className={linkClasses}>Admin</Link>
+              <Link to="/courses" className={linkClasses}>
+                Courses
+              </Link>
+              <Link to="/leaderboard" className={linkClasses}>
+                Leaderboard
+              </Link>
+              <Link to="/profile" className={linkClasses}>
+                Profile
+              </Link>
+              {user.role === 'teacher' && (
+                <Link to="/teacher" className={linkClasses}>
+                  Teacher
+                </Link>
               )}
+              {user.role === 'admin' && (
+                <Link to="/teacher" className={linkClasses}>
+                  Admin
+                </Link>
+              )}
+              <NotificationBell />
               <button
                 onClick={handleLogout}
                 className="relative overflow-hidden rounded-full bg-gradient-to-r from-primary to-accent px-5 py-2 text-sm font-semibold shadow-neon"
@@ -52,7 +68,9 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <Link to="/login" className={linkClasses}>Login</Link>
+              <Link to="/login" className={linkClasses}>
+                Login
+              </Link>
               <Link
                 to="/signup"
                 className="group relative overflow-hidden rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-white shadow-neon"

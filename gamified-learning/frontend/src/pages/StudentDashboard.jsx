@@ -2,6 +2,7 @@
 import useGamification from '../hooks/useGamification.js';
 import useCourses from '../hooks/useCourses.js';
 import useLeaderboardData from '../hooks/useLeaderboardData.js';
+import useAnalytics from '../hooks/useAnalytics.js';
 import LeaderboardWidget from '../components/LeaderboardWidget.jsx';
 import GamificationProgress from '../components/GamificationProgress.jsx';
 import CourseCard from '../components/CourseCard.jsx';
@@ -10,7 +11,9 @@ const StudentDashboard = () => {
   const { courses } = useCourses();
   const { leaders } = useLeaderboardData();
   const { user, requirements } = useGamification();
+  const { data: analytics } = useAnalytics('student');
 
+  const completedCourses = analytics?.enrollments?.filter((enrollment) => enrollment.status === 'completed').length || 0;
   const highlightCards = [
     { label: 'Current XP', value: `${user?.xp ?? 0} XP`, detail: 'Daily growth +320', accent: 'from-primary/80 to-primary/30' },
     {
@@ -19,13 +22,7 @@ const StudentDashboard = () => {
       detail: 'Keep momentum going',
       accent: 'from-rose-500/70 to-rose-500/20'
     },
-    { label: 'Badges Earned', value: `${user?.badges?.length ?? 0}`, detail: 'Unlock 2 more for a surprise', accent: 'from-emerald-400/70 to-emerald-400/10' }
-  ];
-
-  const immersionIdeas = [
-    { title: 'Interactive Charts', description: 'Blend GSAP timelines with curved trend lines to highlight XP velocity.', accent: 'from-primary/40 via-primary/10 to-transparent' },
-    { title: 'Animated Progress Meters', description: 'Use conic gradients + Framer Motion to visualize mastery per module.', accent: 'from-accent/40 via-accent/10 to-transparent' },
-    { title: 'Achievement Popups', description: 'Trigger Lottie bursts and neon toasts whenever a badge or streak unlocks.', accent: 'from-rose-500/40 via-rose-500/10 to-transparent' }
+    { label: 'Courses Completed', value: completedCourses, detail: 'Keep finishing modules', accent: 'from-emerald-400/70 to-emerald-400/10' }
   ];
 
   return (
@@ -99,22 +96,39 @@ const StudentDashboard = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="glass-panel rounded-3xl border border-white/10 p-6 shadow-glass-card"
+            className="glass-panel rounded-3xl border border-white/10 p-6 shadow-glass-card space-y-6"
           >
-            <div className="flex flex-col gap-6 lg:flex-row">
-              <div className="flex-1 space-y-3">
-                <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Immersive Ideas</p>
-                <h2 className="text-2xl font-semibold">Premium UI building blocks</h2>
-                <p className="text-sm text-slate-300">
-                  Blend card decks, animated meters, neon hover states, and cinematic micro-interactions to craft a luxurious learning flow.
-                </p>
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Announcements</p>
+              <div className="mt-3 space-y-3">
+                {(analytics?.announcements || []).slice(0, 3).map((announcement) => (
+                  <div key={announcement._id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span>{announcement.author?.name}</span>
+                      <span>{new Date(announcement.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <h3 className="mt-2 text-lg font-semibold">{announcement.title}</h3>
+                    <p className="text-sm text-slate-300">{announcement.body}</p>
+                  </div>
+                ))}
+                {(!analytics?.announcements || analytics.announcements.length === 0) && (
+                  <p className="text-sm text-slate-400">No announcements yet. Stay tuned!</p>
+                )}
               </div>
-              <div className="grid flex-1 gap-4 md:grid-cols-3">
-                {immersionIdeas.map((idea) => (
-                  <div key={idea.title} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm">
-                    <div className={`mb-3 h-1 w-16 rounded-full bg-gradient-to-r ${idea.accent}`} />
-                    <h3 className="font-semibold">{idea.title}</h3>
-                    <p className="mt-2 text-slate-400">{idea.description}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Recent Quiz History</p>
+              <div className="mt-3 space-y-3">
+                {(analytics?.attempts || []).slice(0, 4).map((attempt) => (
+                  <div key={attempt._id} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                    <div className="flex items-center justify-between text-sm text-slate-300">
+                      <span>{attempt.quiz?.title || 'Quiz'}</span>
+                      <span className="font-semibold text-white">{attempt.score} pts</span>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      {new Date(attempt.createdAt).toLocaleString()} &middot; {attempt.correctCount}/{attempt.totalQuestions}{' '}
+                      correct
+                    </p>
                   </div>
                 ))}
               </div>

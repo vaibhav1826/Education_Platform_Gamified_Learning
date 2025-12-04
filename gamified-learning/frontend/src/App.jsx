@@ -5,7 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 import StudentDashboard from './pages/StudentDashboard.jsx';
-import AdminDashboard from './pages/AdminDashboard.jsx';
+import TeacherDashboard from './pages/TeacherDashboard.jsx';
 import CourseList from './pages/CourseList.jsx';
 import CoursePage from './pages/CoursePage.jsx';
 import Lesson from './pages/Lesson.jsx';
@@ -41,10 +41,10 @@ const App = () => (
             }
           />
           <Route
-            path="/admin"
+            path="/teacher"
             element={
-              <ProtectedRoute roles={['admin']}>
-                <AdminDashboard />
+              <ProtectedRoute roles={['teacher', 'admin']}>
+                <TeacherDashboard />
               </ProtectedRoute>
             }
           />

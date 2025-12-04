@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback } from 'react';
+﻿import { useEffect, useState, useCallback, useMemo } from 'react';
 import useApi from './useApi.js';
 import useSocket from './useSocket.js';
 
@@ -15,12 +15,15 @@ const useLeaderboardData = () => {
     fetchLeaderboard();
   }, [fetchLeaderboard]);
 
-  useSocket('leaderboard:update', (entry) =>
+  const handleRealtime = useCallback((entry) => {
     setLeaders((prev) => {
       const filtered = prev.filter((item) => item.user?._id !== entry.user?._id);
       return [entry, ...filtered];
-    })
-  );
+    });
+  }, []);
+
+  const bindings = useMemo(() => [{ event: 'leaderboard:update', handler: handleRealtime }], [handleRealtime]);
+  useSocket(bindings);
 
   return { leaders, setLeaders };
 };

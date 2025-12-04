@@ -1,17 +1,19 @@
 ﻿import { useEffect, useState, useCallback } from 'react';
 import useApi from './useApi.js';
 
-const useCourses = () => {
+const useCourses = (params = {}) => {
   const api = useApi();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const serializedParams = JSON.stringify(params);
 
   const fetchCourses = useCallback(async () => {
     setLoading(true);
-    const { data } = await api.get('/courses');
+    const query = JSON.parse(serializedParams || '{}');
+    const { data } = await api.get('/courses', { params: query });
     setCourses(data);
     setLoading(false);
-  }, [api]);
+  }, [api, serializedParams]);
 
   useEffect(() => {
     fetchCourses();
