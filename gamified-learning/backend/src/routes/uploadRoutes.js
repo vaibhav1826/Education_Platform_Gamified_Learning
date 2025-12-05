@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = Router();
 
@@ -23,7 +24,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Accepts multipart/form-data with field "image" and returns a URL
-router.post('/profile', upload.single('image'), (req, res) => {
+router.post('/profile', protect, upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No image file uploaded' });
   }

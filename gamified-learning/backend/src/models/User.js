@@ -45,6 +45,8 @@ userSchema.methods.safeObject = function () {
   const obj = this.toObject();
   delete obj.password;
   delete obj.refreshToken;
+  if (!obj.profileImage && obj.avatar) obj.profileImage = obj.avatar;
+  if (!obj.avatar && obj.profileImage) obj.avatar = obj.profileImage;
   return obj;
 };
 
