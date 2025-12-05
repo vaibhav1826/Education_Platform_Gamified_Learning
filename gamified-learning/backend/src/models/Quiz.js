@@ -1,19 +1,27 @@
 ﻿import mongoose from 'mongoose';
 
+const questionSchema = new mongoose.Schema({
+  questionText: { type: String, required: true },
+  options: [{ type: String, required: true }],
+  correctIndex: { type: Number, required: true },
+  points: { type: Number, default: 1 }
+});
+
 const quizSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },
-    description: String,
-    lesson: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' },
-    course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
-    questions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Question' }],
-    timeLimit: { type: Number, default: 300 }, // seconds
-    autoGrade: { type: Boolean, default: true },
-    passingScore: { type: Number, default: 70 },
-    totalPoints: { type: Number, default: 0 },
-    status: { type: String, enum: ['draft', 'published'], default: 'draft' }
+    title: { type: String, required: true, trim: true },
+    instructions: { type: String, trim: true },
+    questions: [questionSchema],
+    assignedBatches: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Batch' }],
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    scheduledAt: { type: Date },
+    timeLimit: { type: Number }, // in minutes
+    isActive: { type: Boolean, default: true }
   },
   { timestamps: true }
 );
+
+quizSchema.index({ createdBy: 1 });
+quizSchema.index({ assignedBatches: 1 });
 
 export default mongoose.model('Quiz', quizSchema);

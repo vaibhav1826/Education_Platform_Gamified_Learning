@@ -39,13 +39,22 @@ const Topbar = () => {
         {user && (
           <div className="flex items-center gap-2 rounded-full bg-white/5 px-3 py-1">
             <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-black/40">
-              {user.profileImage ? (
-                <img src={user.profileImage} alt={user.name} className="h-full w-full object-cover" />
-              ) : (
-                <span className="text-xs font-semibold">
-                  {user.name?.charAt(0)?.toUpperCase() || 'A'}
-                </span>
-              )}
+              {user.profileImage || user.avatar ? (
+                <img
+                  src={((user.profileImage || user.avatar).startsWith('http')
+                    ? (user.profileImage || user.avatar)
+                    : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${user.profileImage || user.avatar}`)}
+                  alt={user.name}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <span className={`text-xs font-semibold ${user.profileImage || user.avatar ? 'hidden' : ''}`}>
+                {user.name?.charAt(0)?.toUpperCase() || 'A'}
+              </span>
             </div>
             <div className="hidden text-left text-xs sm:block">
               <p className="font-semibold text-slate-100 text-ellipsis overflow-hidden max-w-[140px]">

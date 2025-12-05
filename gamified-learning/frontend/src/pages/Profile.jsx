@@ -84,11 +84,15 @@ const Profile = () => {
               <div className="flex items-center gap-3">
                 <div className="relative h-16 w-16">
                   <div className="w-16 h-16 rounded-full border-2 border-slate-600 bg-slate-800 overflow-hidden flex items-center justify-center shadow-lg">
-                    {preview || user.profileImage ? (
+                    {preview || (user.profileImage && user.profileImage.trim()) ? (
                       <img
-                        src={preview || user.profileImage}
+                        src={preview || (user.profileImage.startsWith('http') ? user.profileImage : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${user.profileImage}`)}
                         alt={user.name}
                         className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
                       />
                     ) : (
                       <span className="text-lg font-semibold text-slate-200">
@@ -110,11 +114,16 @@ const Profile = () => {
                         onClick={async () => {
                           setUploading(true);
                           try {
-                            const { data: updated } = await api.patch('/users/me/profile-image', {
+                            await api.patch('/users/me/profile-image', {
                               profileImage: ''
                             });
+                            // Refresh user data from server
+                            const { data: refreshed } = await api.get('/auth/me');
                             setPreview(null);
-                            setUser(updated);
+                            setUser(refreshed);
+                          } catch (err) {
+                            console.error('Failed to remove profile image:', err);
+                            alert('Failed to remove profile image. Please try again.');
                           } finally {
                             setUploading(false);
                           }
@@ -145,7 +154,14 @@ const Profile = () => {
                         const { data: updated } = await api.patch('/users/me/profile-image', {
                           profileImage: upload.url
                         });
-                        setUser(updated);
+                        // Refresh user data from server to ensure we have latest
+                        const { data: refreshed } = await api.get('/auth/me');
+                        setUser(refreshed);
+                        setPreview(null); // Clear preview after successful save
+                      } catch (err) {
+                        console.error('Failed to update profile image:', err);
+                        setPreview(null);
+                        alert('Failed to update profile image. Please try again.');
                       } finally {
                         setUploading(false);
                       }

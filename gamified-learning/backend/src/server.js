@@ -17,6 +17,8 @@ import analyticsRoutes from './routes/analyticsRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import teacherRoutes from './routes/teacherRoutes.js';
+import teacherQuizRoutes from './routes/quizRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -59,6 +61,8 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/teacher', teacherRoutes);
+app.use('/api/teacher', teacherQuizRoutes);
 
 app.use(celebrateErrors());
 app.use(notFound);
