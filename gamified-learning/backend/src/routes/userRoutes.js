@@ -11,12 +11,12 @@ router.patch('/me/profile-image', protect, async (req, res) => {
   const user = await User.findById(req.user._id);
   if (!user) return res.status(404).json({ message: 'User not found' });
 
-  if (!profileImage) {
-    user.profileImage = undefined;
-    user.avatar = undefined;
+  if (!profileImage || profileImage.trim() === '') {
+    user.profileImage = '';
+    user.avatar = '';
   } else {
-    user.profileImage = profileImage;
-    user.avatar = profileImage;
+    user.profileImage = profileImage.trim();
+    user.avatar = profileImage.trim();
   }
 
   await user.save();

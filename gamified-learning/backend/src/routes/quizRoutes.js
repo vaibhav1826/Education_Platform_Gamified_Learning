@@ -1,14 +1,26 @@
 ﻿import { Router } from 'express';
-import { getQuiz, createQuiz, addQuestion, assignQuiz, getQuizAttempts, submitQuiz } from '../controllers/quizController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
+import {
+  createQuiz,
+  getQuizzes,
+  getQuiz,
+  updateQuiz,
+  deleteQuiz,
+  getQuizSubmissions,
+  getSubmission
+} from '../controllers/quizController.js';
 
 const router = Router();
 
-router.post('/', protect, authorize('teacher', 'admin'), createQuiz);
-router.get('/:id', protect, getQuiz);
-router.post('/:id/questions', protect, authorize('teacher', 'admin'), addQuestion);
-router.post('/:id/assign', protect, authorize('teacher', 'admin'), assignQuiz);
-router.get('/:id/attempts', protect, authorize('teacher', 'admin'), getQuizAttempts);
-router.post('/:id/submit', protect, submitQuiz);
+router.use(protect);
+router.use(authorize('teacher'));
+
+router.post('/quizzes', createQuiz);
+router.get('/quizzes', getQuizzes);
+router.get('/quizzes/:id', getQuiz);
+router.patch('/quizzes/:id', updateQuiz);
+router.delete('/quizzes/:id', deleteQuiz);
+router.get('/quizzes/:quizId/submissions', getQuizSubmissions);
+router.get('/submissions/:id', getSubmission);
 
 export default router;

@@ -3,13 +3,27 @@ import Navbar from './components/Navbar.jsx';
 import Hyperspeed from './components/Hyperspeed.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AdminLayout from './components/admin/AdminLayout.jsx';
-import Login from './pages/Login.jsx';
+import LoginRoleSelect from './pages/LoginRoleSelect.jsx';
+import StudentLogin from './pages/login/StudentLogin.jsx';
+import TeacherLogin from './pages/login/TeacherLogin.jsx';
+import AdminLogin from './pages/login/AdminLogin.jsx';
 import ChooseRole from './pages/ChooseRole.jsx';
 import StudentSignup from './pages/signup/StudentSignup.jsx';
 import TeacherSignup from './pages/signup/TeacherSignup.jsx';
 import AdminSignup from './pages/signup/AdminSignup.jsx';
 import StudentDashboard from './pages/StudentDashboard.jsx';
-import TeacherDashboard from './pages/TeacherDashboard.jsx';
+import TeacherLayout from './components/teacher/TeacherLayout.jsx';
+import TeacherDashboard from './pages/teacher/TeacherDashboard.jsx';
+import Batches from './pages/teacher/Batches.jsx';
+import BatchDetails from './pages/teacher/BatchDetails.jsx';
+import CreateBatch from './pages/teacher/CreateBatch.jsx';
+import BatchLeaderboard from './pages/teacher/BatchLeaderboard.jsx';
+import Quizzes from './pages/teacher/Quizzes.jsx';
+import CreateQuiz from './pages/teacher/CreateQuiz.jsx';
+import QuizDetails from './pages/teacher/QuizDetails.jsx';
+import SubmissionsList from './pages/teacher/SubmissionsList.jsx';
+import SubmissionDetails from './pages/teacher/SubmissionDetails.jsx';
+import GlobalLeaderboard from './pages/teacher/GlobalLeaderboard.jsx';
 import AdminDashboard from './pages/admin/AdminDashboard.jsx';
 import AdminUsers from './pages/admin/AdminUsers.jsx';
 import AdminCourses from './pages/admin/AdminCourses.jsx';
@@ -41,7 +55,10 @@ const App = () => (
       <Navbar />
       <div className="flex-1">
         <Routes>
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<LoginRoleSelect />} />
+          <Route path="/login/student" element={<StudentLogin />} />
+          <Route path="/login/teacher" element={<TeacherLogin />} />
+          <Route path="/login/admin" element={<AdminLogin />} />
           <Route path="/choose-role" element={<ChooseRole />} />
           <Route path="/signup" element={<Navigate to="/choose-role" replace />} />
           <Route path="/signup/student" element={<StudentSignup />} />
@@ -56,13 +73,27 @@ const App = () => (
             }
           />
           <Route
-            path="/teacher/dashboard"
+            path="/teacher/*"
             element={
               <ProtectedRoute roles={['teacher', 'admin']}>
-                <TeacherDashboard />
+                <TeacherLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<TeacherDashboard />} />
+            <Route path="batches" element={<Batches />} />
+            <Route path="batches/create" element={<CreateBatch />} />
+            <Route path="batches/:id" element={<BatchDetails />} />
+            <Route path="batches/:id/leaderboard" element={<BatchLeaderboard />} />
+            <Route path="quizzes" element={<Quizzes />} />
+            <Route path="quizzes/create" element={<CreateQuiz />} />
+            <Route path="quizzes/:id" element={<QuizDetails />} />
+            <Route path="quizzes/:quizId/submissions" element={<SubmissionsList />} />
+            <Route path="submissions/:id" element={<SubmissionDetails />} />
+            <Route path="leaderboard" element={<GlobalLeaderboard />} />
+            <Route path="settings" element={<div className="p-6"><h1 className="text-2xl text-white">Settings</h1><p className="text-slate-400">Coming soon</p></div>} />
+          </Route>
           <Route
             path="/admin/*"
             element={

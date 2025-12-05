@@ -74,13 +74,22 @@ const AdminUsers = () => {
                 <td className="px-4 py-3 text-slate-100">
                   <div className="flex items-center gap-3">
                     <div className="h-8 w-8 overflow-hidden rounded-full border border-white/15 bg-black/40">
-                      {user.profileImage ? (
-                        <img src={user.profileImage} alt={user.name} className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-slate-300">
-                          {user.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                      {user.profileImage || user.avatar ? (
+                        <img
+                          src={((user.profileImage || user.avatar).startsWith('http')
+                            ? (user.profileImage || user.avatar)
+                            : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${user.profileImage || user.avatar}`)}
+                          alt={user.name}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div className={`flex h-full w-full items-center justify-center text-xs text-slate-300 ${user.profileImage || user.avatar ? 'hidden' : ''}`}>
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
                     </div>
                     <span>{user.name}</span>
                   </div>
