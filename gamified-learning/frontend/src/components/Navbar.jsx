@@ -48,16 +48,36 @@ const Navbar = () => {
                 Profile
               </Link>
               {user.role === 'teacher' && (
-                <Link to="/teacher" className={linkClasses}>
+                <Link to="/teacher/dashboard" className={linkClasses}>
                   Teacher
                 </Link>
               )}
               {user.role === 'admin' && (
-                <Link to="/teacher" className={linkClasses}>
+                <Link to="/admin/dashboard" className={linkClasses}>
                   Admin
                 </Link>
               )}
-              <NotificationBell />
+              <div className="flex items-center gap-3">
+                <NotificationBell />
+                <div className="h-8 w-8 overflow-hidden rounded-full border border-white/20 bg-black/40">
+                  {user.profileImage || user.avatar ? (
+                    <img
+                      src={((user.profileImage || user.avatar).startsWith('http')
+                        ? (user.profileImage || user.avatar)
+                        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${user.profileImage || user.avatar}`)}
+                      alt={user.name}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className={`flex h-full w-full items-center justify-center text-xs text-slate-300 ${user.profileImage || user.avatar ? 'hidden' : ''}`}>
+                    {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                </div>
+              </div>
               <button
                 onClick={handleLogout}
                 className="relative overflow-hidden rounded-full bg-gradient-to-r from-primary to-accent px-5 py-2 text-sm font-semibold shadow-neon"
@@ -72,7 +92,7 @@ const Navbar = () => {
                 Login
               </Link>
               <Link
-                to="/signup"
+                to="/choose-role"
                 className="group relative overflow-hidden rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-white shadow-neon"
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-primary/70 via-accent/60 to-primary/70 opacity-60 blur-lg transition group-hover:opacity-80" />

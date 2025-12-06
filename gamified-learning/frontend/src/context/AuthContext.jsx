@@ -13,6 +13,8 @@ const reducer = (state, action) => {
       return { ...initialState, accessToken: null, loading: false };
     case 'LOADING':
       return { ...state, loading: action.payload };
+    case 'SET_USER':
+      return { ...state, user: action.payload };
     default:
       return state;
   }
@@ -36,15 +38,23 @@ export const AuthProvider = ({ children }) => {
     };
   }, [initAuth]);
 
-  const handleLogin = useCallback(async (payload) => {
-    const data = await login(payload);
-    if (data) dispatch({ type: 'LOGIN', payload: data });
-  }, [login]);
+  const handleLogin = useCallback(
+    async (payload) => {
+      const data = await login(payload);
+      if (data) dispatch({ type: 'LOGIN', payload: data });
+      return data;
+    },
+    [login]
+  );
 
-  const handleSignup = useCallback(async (payload) => {
-    const data = await signup(payload);
-    if (data) dispatch({ type: 'LOGIN', payload: data });
-  }, [signup]);
+  const handleSignup = useCallback(
+    async (payload) => {
+      const data = await signup(payload);
+      if (data) dispatch({ type: 'LOGIN', payload: data });
+      return data;
+    },
+    [signup]
+  );
 
   const handleGoogle = useCallback(async (payload) => {
     const data = await loginWithGoogle(payload);
@@ -56,9 +66,20 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'LOGOUT' });
   }, [logout]);
 
+  const setUser = useCallback((user) => {
+    dispatch({ type: 'SET_USER', payload: user });
+  }, []);
+
   return (
     <AuthContext.Provider
-      value={{ ...state, login: handleLogin, signup: handleSignup, loginWithGoogle: handleGoogle, logout: handleLogout }}
+      value={{
+        ...state,
+        login: handleLogin,
+        signup: handleSignup,
+        loginWithGoogle: handleGoogle,
+        logout: handleLogout,
+        setUser
+      }}
     >
       {children}
     </AuthContext.Provider>

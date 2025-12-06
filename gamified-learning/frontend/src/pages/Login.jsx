@@ -16,8 +16,11 @@ const Login = () => {
     setIsLoading(true);
     setError(null);
     try {
-      await login({ email: form.email, password: form.password });
-      navigate('/');
+      const data = await login({ email: form.email, password: form.password, role: form.role });
+      const role = data?.user?.role;
+      if (role === 'teacher') navigate('/teacher/dashboard');
+      else if (role === 'admin') navigate('/admin/dashboard');
+      else navigate('/student/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to login');
     } finally {
@@ -27,8 +30,11 @@ const Login = () => {
 
   const handleGoogleSuccess = async (response) => {
     try {
-      await loginWithGoogle({ credential: response.credential, role: form.role });
-      navigate('/');
+      const data = await loginWithGoogle({ credential: response.credential, role: form.role });
+      const role = data?.user?.role;
+      if (role === 'teacher') navigate('/teacher/dashboard');
+      else if (role === 'admin') navigate('/admin/dashboard');
+      else navigate('/student/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Google sign-in failed');
     }
@@ -36,47 +42,45 @@ const Login = () => {
 
   return (
     <div className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl animate-float-delayed" />
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/3 right-1/4 h-72 w-72 rounded-full bg-purple-500/25 blur-3xl" />
+        <div className="absolute bottom-1/3 left-1/4 h-80 w-80 rounded-full bg-cyan-500/25 blur-3xl" />
       </div>
 
       <div className="relative z-10 w-full max-w-md">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="glass-card-premium rounded-2xl p-8 relative overflow-hidden"
+          transition={{ duration: 0.45 }}
+          className="glass-card-premium relative overflow-hidden rounded-2xl p-8"
         >
-          {/* Decorative top bar */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-cyan-500 to-purple-500 opacity-50" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-500 opacity-70" />
 
-          <div className="mb-8 text-center">
-            <motion.h2 
-              initial={{ opacity: 0, y: -20 }}
+          <div className="mb-6 text-center">
+            <motion.h2
+              initial={{ opacity: 0, y: -16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 text-glow"
+              transition={{ delay: 0.1 }}
+              className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-300"
             >
               Welcome Back
             </motion.h2>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-slate-400 mt-2 text-sm"
+              transition={{ delay: 0.2 }}
+              className="mt-2 text-sm text-slate-400"
             >
-              Enter your credentials to continue
+              Enter your credentials to continue your learning journey
             </motion.p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center"
+                className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-center text-sm text-red-300"
               >
                 {error}
               </motion.div>
@@ -86,11 +90,11 @@ const Login = () => {
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
+                transition={{ delay: 0.3 }}
               >
                 <input
-                  className="w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm outline-none placeholder:text-slate-500 focus:border-purple-500/50 input-glow transition-all duration-300"
-                  placeholder="Email Address"
+                  className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm outline-none placeholder:text-slate-500 focus:border-purple-400/60 input-glow transition-all"
+                  placeholder="Email address"
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -100,10 +104,10 @@ const Login = () => {
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
+                transition={{ delay: 0.4 }}
               >
                 <input
-                  className="w-full rounded-xl border border-white/10 bg-black/40 p-4 text-sm outline-none placeholder:text-slate-500 focus:border-purple-500/50 input-glow transition-all duration-300"
+                  className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm outline-none placeholder:text-slate-500 focus:border-purple-400/60 input-glow transition-all"
                   placeholder="Password"
                   type="password"
                   value={form.password}
@@ -115,18 +119,18 @@ const Login = () => {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.55 }}
-              className="grid grid-cols-2 gap-3 text-sm"
+              transition={{ delay: 0.5 }}
+              className="grid grid-cols-3 gap-3 text-sm"
             >
-              {['student', 'teacher'].map((role) => (
+              {['student', 'teacher', 'admin'].map((role) => (
                 <button
                   key={role}
                   type="button"
                   onClick={() => setForm({ ...form, role })}
                   className={`rounded-xl border px-4 py-3 font-semibold capitalize transition ${
                     form.role === role
-                      ? 'border-cyan-500/70 bg-cyan-500/10 text-white'
-                      : 'border-white/10 bg-black/30 text-slate-400'
+                      ? 'border-purple-500/70 bg-purple-500/10 text-white'
+                      : 'border-white/10 bg-black/30 text-slate-400 hover:border-white/20'
                   }`}
                 >
                   {role}
@@ -141,7 +145,7 @@ const Login = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               disabled={isLoading}
-              className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 py-4 text-sm font-bold text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-2 w-full rounded-xl bg-gradient-to-r from-purple-500 to-cyan-500 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30 transition hover:shadow-purple-500/50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </motion.button>
@@ -155,6 +159,18 @@ const Login = () => {
               <span>or continue with</span>
               <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setError('Google sign-in failed')} />
             </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              className="mt-3 text-center text-xs text-slate-400"
+            >
+              Don't have an account?{' '}
+              <a href="/choose-role" className="font-semibold text-purple-300 hover:text-purple-200">
+                Sign up
+              </a>
+            </motion.p>
           </form>
         </motion.div>
       </div>

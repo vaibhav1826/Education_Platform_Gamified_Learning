@@ -183,8 +183,22 @@ const Leaderboard = () => {
                     <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${idx === 0 ? 'from-yellow-400 to-amber-600 ring-4 ring-yellow-500/30' :
                         idx === 1 ? 'from-slate-300 to-slate-500 ring-4 ring-slate-400/30' :
                           'from-amber-600 to-amber-800 ring-4 ring-amber-600/30'
-                      } flex items-center justify-center text-3xl font-bold text-white shadow-2xl relative z-10`}>
-                      {leader.user?.name?.charAt(0)?.toUpperCase() || '?'}
+                      } flex items-center justify-center text-3xl font-bold text-white shadow-2xl relative z-10 overflow-hidden`}>
+                      {leader.user?.profileImage || leader.user?.avatar ? (
+                        <img
+                          src={(leader.user.profileImage || leader.user.avatar).startsWith('http') 
+                            ? (leader.user.profileImage || leader.user.avatar)
+                            : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${leader.user.profileImage || leader.user.avatar}`}
+                          alt={leader.user?.name}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.parentElement.innerHTML = `<span>${leader.user?.name?.charAt(0)?.toUpperCase() || '?'}</span>`;
+                          }}
+                        />
+                      ) : (
+                        <span>{leader.user?.name?.charAt(0)?.toUpperCase() || '?'}</span>
+                      )}
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
@@ -257,8 +271,22 @@ const Leaderboard = () => {
                               idx === 1 ? 'from-slate-400 to-slate-600' :
                                 idx === 2 ? 'from-amber-600 to-amber-800' :
                                   'from-blue-500 to-purple-600'
-                            } flex items-center justify-center text-lg font-bold text-white shadow-lg`}>
-                            {leader.user?.name?.charAt(0)?.toUpperCase() || '?'}
+                            } flex items-center justify-center text-lg font-bold text-white shadow-lg overflow-hidden`}>
+                            {leader.user?.profileImage || leader.user?.avatar ? (
+                              <img
+                                src={((leader.user.profileImage || leader.user.avatar).startsWith('http')
+                                  ? (leader.user.profileImage || leader.user.avatar)
+                                  : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${leader.user.profileImage || leader.user.avatar}`)}
+                                alt={leader.user?.name}
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.parentElement.innerHTML = `<span>${leader.user?.name?.charAt(0)?.toUpperCase() || '?'}</span>`;
+                                }}
+                              />
+                            ) : (
+                              <span>{leader.user?.name?.charAt(0)?.toUpperCase() || '?'}</span>
+                            )}
                           </div>
 
                           <div>

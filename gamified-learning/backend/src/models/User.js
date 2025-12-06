@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema(
     password: { type: String },
     googleId: { type: String, index: true },
     avatar: String,
+    profileImage: { type: String, default: '' },
+    city: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    specialization: { type: String, trim: true },
+    experience: { type: Number, min: 0 },
     role: { type: String, enum: ['student', 'teacher', 'admin'], required: true, default: 'student' },
     authProvider: { type: String, enum: ['credentials', 'google'], default: 'credentials' },
     xp: { type: Number, default: 0 },
@@ -40,6 +45,8 @@ userSchema.methods.safeObject = function () {
   const obj = this.toObject();
   delete obj.password;
   delete obj.refreshToken;
+  if (!obj.profileImage && obj.avatar) obj.profileImage = obj.avatar;
+  if (!obj.avatar && obj.profileImage) obj.avatar = obj.profileImage;
   return obj;
 };
 

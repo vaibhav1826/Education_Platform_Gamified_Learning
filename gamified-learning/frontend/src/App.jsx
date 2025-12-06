@@ -2,10 +2,35 @@
 import Navbar from './components/Navbar.jsx';
 import Hyperspeed from './components/Hyperspeed.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
-import Login from './pages/Login.jsx';
-import Signup from './pages/Signup.jsx';
+import AdminLayout from './components/admin/AdminLayout.jsx';
+import LoginRoleSelect from './pages/LoginRoleSelect.jsx';
+import StudentLogin from './pages/login/StudentLogin.jsx';
+import TeacherLogin from './pages/login/TeacherLogin.jsx';
+import AdminLogin from './pages/login/AdminLogin.jsx';
+import ChooseRole from './pages/ChooseRole.jsx';
+import StudentSignup from './pages/signup/StudentSignup.jsx';
+import TeacherSignup from './pages/signup/TeacherSignup.jsx';
+import AdminSignup from './pages/signup/AdminSignup.jsx';
 import StudentDashboard from './pages/StudentDashboard.jsx';
-import TeacherDashboard from './pages/TeacherDashboard.jsx';
+import TeacherLayout from './components/teacher/TeacherLayout.jsx';
+import TeacherDashboard from './pages/teacher/TeacherDashboard.jsx';
+import Batches from './pages/teacher/Batches.jsx';
+import BatchDetails from './pages/teacher/BatchDetails.jsx';
+import CreateBatch from './pages/teacher/CreateBatch.jsx';
+import BatchLeaderboard from './pages/teacher/BatchLeaderboard.jsx';
+import Quizzes from './pages/teacher/Quizzes.jsx';
+import CreateQuiz from './pages/teacher/CreateQuiz.jsx';
+import QuizDetails from './pages/teacher/QuizDetails.jsx';
+import SubmissionsList from './pages/teacher/SubmissionsList.jsx';
+import SubmissionDetails from './pages/teacher/SubmissionDetails.jsx';
+import GlobalLeaderboard from './pages/teacher/GlobalLeaderboard.jsx';
+import AdminDashboard from './pages/admin/AdminDashboard.jsx';
+import AdminUsers from './pages/admin/AdminUsers.jsx';
+import AdminCourses from './pages/admin/AdminCourses.jsx';
+import AdminGamification from './pages/admin/AdminGamification.jsx';
+import AdminLeaderboard from './pages/admin/AdminLeaderboard.jsx';
+import AdminReports from './pages/admin/AdminReports.jsx';
+import AdminSettings from './pages/admin/AdminSettings.jsx';
 import CourseList from './pages/CourseList.jsx';
 import CoursePage from './pages/CoursePage.jsx';
 import Lesson from './pages/Lesson.jsx';
@@ -30,24 +55,62 @@ const App = () => (
       <Navbar />
       <div className="flex-1">
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<LoginRoleSelect />} />
+          <Route path="/login/student" element={<StudentLogin />} />
+          <Route path="/login/teacher" element={<TeacherLogin />} />
+          <Route path="/login/admin" element={<AdminLogin />} />
+          <Route path="/choose-role" element={<ChooseRole />} />
+          <Route path="/signup" element={<Navigate to="/choose-role" replace />} />
+          <Route path="/signup/student" element={<StudentSignup />} />
+          <Route path="/signup/teacher" element={<TeacherSignup />} />
+          <Route path="/signup/admin" element={<AdminSignup />} />
           <Route
-            path="/"
+            path="/student/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute roles={['student']}>
                 <StudentDashboard />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/teacher"
+            path="/teacher/*"
             element={
               <ProtectedRoute roles={['teacher', 'admin']}>
-                <TeacherDashboard />
+                <TeacherLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<TeacherDashboard />} />
+            <Route path="batches" element={<Batches />} />
+            <Route path="batches/create" element={<CreateBatch />} />
+            <Route path="batches/:id" element={<BatchDetails />} />
+            <Route path="batches/:id/leaderboard" element={<BatchLeaderboard />} />
+            <Route path="quizzes" element={<Quizzes />} />
+            <Route path="quizzes/create" element={<CreateQuiz />} />
+            <Route path="quizzes/:id" element={<QuizDetails />} />
+            <Route path="quizzes/:quizId/submissions" element={<SubmissionsList />} />
+            <Route path="submissions/:id" element={<SubmissionDetails />} />
+            <Route path="leaderboard" element={<GlobalLeaderboard />} />
+            <Route path="settings" element={<div className="p-6"><h1 className="text-2xl text-white">Settings</h1><p className="text-slate-400">Coming soon</p></div>} />
+          </Route>
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="courses" element={<AdminCourses />} />
+            <Route path="gamification" element={<AdminGamification />} />
+            <Route path="leaderboard" element={<AdminLeaderboard />} />
+            <Route path="reports" element={<AdminReports />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
           <Route
             path="/courses"
             element={
@@ -96,7 +159,8 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
         </Routes>
       </div>
     </div>
