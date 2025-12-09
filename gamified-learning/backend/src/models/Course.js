@@ -23,7 +23,9 @@ const courseSchema = new mongoose.Schema(
     levelRequirement: { type: Number, default: 1 },
     featured: { type: Boolean, default: false },
     resources: [resourceSchema],
-    enrollmentCount: { type: Number, default: 0 }
+    enrollmentCount: { type: Number, default: 0 },
+    approvalStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved' },
+    rejectionReason: { type: String, trim: true }
   },
   { timestamps: true }
 );

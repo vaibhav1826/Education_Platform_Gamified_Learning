@@ -6,7 +6,8 @@ const batchSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
     subject: { type: String, trim: true },
-    students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+    students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    disabled: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

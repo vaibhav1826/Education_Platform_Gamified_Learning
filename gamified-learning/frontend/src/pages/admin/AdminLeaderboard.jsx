@@ -1,43 +1,55 @@
-// import axios from 'axios'; // TODO: connect to backend API
-import { useState } from 'react';
-
-const mockLeaderboard = [
-  { id: 1, name: 'Alex Carter', xp: 5400, level: 12 },
-  { id: 2, name: 'Priya Sharma', xp: 5100, level: 11 },
-  { id: 3, name: 'Jordan Lee', xp: 4800, level: 10 }
-];
-
-const filters = ['all-time', 'weekly', 'monthly'];
+import { useEffect, useState } from 'react';
+import useApi from '../../hooks/useApi.js';
 
 const AdminLeaderboard = () => {
-  const [filter, setFilter] = useState('all-time');
+  const api = useApi();
+  const [tab, setTab] = useState('students');
+  const [students, setStudents] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [sRes, tRes] = await Promise.all([
+          api.get('/admin/leaderboard/students'),
+          api.get('/admin/leaderboard/teachers')
+        ]);
+        setStudents(sRes.data || []);
+        setTeachers(tRes.data || []);
+      } catch (err) {
+        console.error('Failed to load leaderboards', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [api]);
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-white">Global leaderboard</h2>
-          <p className="text-xs text-slate-400">
-            Inspect rankings across the platform. You can later hook this into your actual leaderboard API.
-          </p>
+          <h2 className="text-sm font-semibold text-white">Leaderboards</h2>
+          <p className="text-xs text-slate-400">Students (global) and Teachers (activity score).</p>
         </div>
         <div className="flex gap-2 text-xs">
-          {filters.map((f) => (
+          {['students', 'teachers'].map((f) => (
             <button
               key={f}
               type="button"
-              onClick={() => setFilter(f)}
+              onClick={() => setTab(f)}
               className={`rounded-full border px-3 py-1 font-semibold capitalize transition ${
-                filter === f
-                  ? 'border-primary/70 bg-primary/20 text-white'
-                  : 'border-white/10 bg-black/40 text-slate-300 hover:border-white/30'
+                tab === f ? 'border-primary/70 bg-primary/20 text-white' : 'border-white/10 bg-black/40 text-slate-300 hover:border-white/30'
               }`}
             >
-              {f.replace('-', ' ')}
+              {f}
             </button>
           ))}
         </div>
       </div>
+
+      {loading ? <p className="text-sm text-slate-400">Loading...</p> : null}
 
       <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/40">
         <table className="min-w-full text-left text-sm">
@@ -45,17 +57,37 @@ const AdminLeaderboard = () => {
             <tr>
               <th className="px-4 py-3">Rank</th>
               <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">XP</th>
-              <th className="px-4 py-3">Level</th>
+              {tab === 'students' ? (
+                <>
+                  <th className="px-4 py-3">Score</th>
+                  <th className="px-4 py-3">Attempts</th>
+                </>
+              ) : (
+                <>
+                  <th className="px-4 py-3">Batches</th>
+                  <th className="px-4 py-3">Quizzes</th>
+                  <th className="px-4 py-3">Activity</th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody>
-            {mockLeaderboard.map((entry, index) => (
-              <tr key={entry.id} className="border-b border-white/5 last:border-0">
-                <td className="px-4 py-3 text-slate-200">#{index + 1}</td>
-                <td className="px-4 py-3 text-slate-100">{entry.name}</td>
-                <td className="px-4 py-3 text-slate-200">{entry.xp.toLocaleString()}</td>
-                <td className="px-4 py-3 text-slate-200">{entry.level}</td>
+            {(tab === 'students' ? students : teachers).map((entry, index) => (
+              <tr key={entry.rank || entry.teacher?._id || entry.student?._id || index} className="border-b border-white/5 last:border-0">
+                <td className="px-4 py-3 text-slate-200">#{entry.rank || index + 1}</td>
+                <td className="px-4 py-3 text-slate-100">{entry.student?.name || entry.teacher?.name || 'User'}</td>
+                {tab === 'students' ? (
+                  <>
+                    <td className="px-4 py-3 text-slate-200">{entry.totalScore}</td>
+                    <td className="px-4 py-3 text-slate-200">{entry.attempts}</td>
+                  </>
+                ) : (
+                  <>
+                    <td className="px-4 py-3 text-slate-200">{entry.batches}</td>
+                    <td className="px-4 py-3 text-slate-200">{entry.quizzes}</td>
+                    <td className="px-4 py-3 text-slate-200">{Math.round(entry.activityScore)}</td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
@@ -63,7 +95,7 @@ const AdminLeaderboard = () => {
       </div>
 
       <div className="rounded-2xl border border-dashed border-white/20 bg-black/30 p-4 text-xs text-slate-400">
-        Placeholder chart area – you can mount a small chart component (e.g. Recharts) here to visualize XP over time.
+        Hook charts here if needed. Data is live from admin leaderboards.
       </div>
     </div>
   );

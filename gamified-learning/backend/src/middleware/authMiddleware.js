@@ -9,6 +9,8 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).populate('badges');
     if (!user) return res.status(401).json({ message: 'User not found' });
+    if (decoded.role && user.role !== decoded.role) return res.status(401).json({ message: 'Role mismatch. Please login again.' });
+    if (user.status === 'inactive') return res.status(403).json({ message: 'Account inactive. Contact admin.' });
     req.user = user;
     next();
   } catch (error) {
@@ -28,6 +30,8 @@ export const refreshGuard = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
     const user = await User.findById(decoded.id);
     if (!user || user.refreshToken !== token) return res.status(401).json({ message: 'Invalid refresh token' });
+    if (decoded.role && user.role !== decoded.role) return res.status(401).json({ message: 'Role mismatch. Please login again.' });
+    if (user.status === 'inactive') return res.status(403).json({ message: 'Account inactive. Contact admin.' });
     req.user = user;
     next();
   } catch (error) {

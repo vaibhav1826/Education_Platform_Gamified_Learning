@@ -1,17 +1,66 @@
 ﻿import { motion } from 'framer-motion';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import useGamification from '../hooks/useGamification.js';
 import useCourses from '../hooks/useCourses.js';
 import useLeaderboardData from '../hooks/useLeaderboardData.js';
 import useAnalytics from '../hooks/useAnalytics.js';
+import useApi from '../hooks/useApi.js';
+import { useSocket } from '../context/SocketContext.jsx';
 import LeaderboardWidget from '../components/LeaderboardWidget.jsx';
 import GamificationProgress from '../components/GamificationProgress.jsx';
 import CourseCard from '../components/CourseCard.jsx';
 
 const StudentDashboard = () => {
+  const api = useApi();
+  const { subscribe } = useSocket();
   const { courses } = useCourses();
   const { leaders } = useLeaderboardData();
   const { user, requirements } = useGamification();
   const { data: analytics } = useAnalytics('student');
+  const [assignedTests, setAssignedTests] = useState([]);
+  const [batches, setBatches] = useState([]);
+  const [recentAnnouncements, setRecentAnnouncements] = useState([]);
+
+  const load = useCallback(async () => {
+      try {
+        const [testsRes, batchesRes, announcementRes] = await Promise.all([
+          api.get('/student/quizzes/assigned'),
+          api.get('/student/batches'),
+          api.get('/student/announcements?limit=5')
+        ]);
+        setAssignedTests(testsRes.data || []);
+        setBatches(batchesRes.data || []);
+        setRecentAnnouncements(announcementRes.data || []);
+      } catch (err) {
+        console.error('Dashboard fetch failed', err);
+      }
+  }, [api]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // Real-time updates via socket
+  useEffect(() => {
+    const unsubscribes = [
+      subscribe('batch:joined', () => load()),
+      subscribe('batch:updated', () => load()),
+      subscribe('quiz:assigned', () => load()),
+      subscribe('announcement:new', () => load()),
+      subscribe('submission:created', () => load()),
+      subscribe('notification:new', () => load())
+    ];
+
+    return () => {
+      unsubscribes.forEach((unsub) => unsub());
+    };
+  }, [subscribe, load]);
+
+  const upcomingTests = useMemo(
+    () => assignedTests.filter((t) => t.status === 'upcoming' || t.status === 'active').slice(0, 3),
+    [assignedTests]
+  );
+  const batchSummary = useMemo(() => batches.slice(0, 3), [batches]);
 
   const completedCourses = analytics?.enrollments?.filter((enrollment) => enrollment.status === 'completed').length || 0;
   const highlightCards = [
@@ -92,6 +141,53 @@ const StudentDashboard = () => {
               <CourseCard key={course._id} course={course} />
             ))}
           </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="glass-panel rounded-2xl border border-white/10 p-5 space-y-3">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Upcoming tests</p>
+              {upcomingTests.length === 0 && <p className="text-sm text-slate-500">No upcoming tests.</p>}
+              {upcomingTests.map((quiz) => (
+                <div key={quiz._id} className="rounded-xl border border-white/5 bg-white/5 p-3">
+                  <p className="font-semibold">{quiz.title}</p>
+                  <p className="text-xs text-slate-500">{quiz.questions?.length || 0} questions</p>
+                </div>
+              ))}
+            </div>
+            <div className="glass-panel rounded-2xl border border-white/10 p-5 space-y-3">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Batches</p>
+              {batchSummary.length === 0 && <p className="text-sm text-slate-500">Join a batch to start.</p>}
+              {batchSummary.map((batch) => (
+                <div key={batch._id} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 px-3 py-2">
+                  <div>
+                    <p className="font-semibold">{batch.name}</p>
+                    <p className="text-xs text-slate-500">{batch.students?.length || 0} students</p>
+                  </div>
+                  <span className="rounded-full bg-primary/10 px-2 py-1 text-[11px] text-primary">Batch</span>
+                </div>
+              ))}
+            </div>
+            <div className="glass-panel rounded-2xl border border-white/10 p-5 space-y-3">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Quick links</p>
+              <div className="flex flex-wrap gap-2">
+                <a href="/student/tests" className="rounded-full bg-white/5 px-3 py-1 text-xs hover:bg-primary/20">
+                  Tests
+                </a>
+                <a href="/student/batches" className="rounded-full bg-white/5 px-3 py-1 text-xs hover:bg-primary/20">
+                  Batches
+                </a>
+                <a href="/student/leaderboard" className="rounded-full bg-white/5 px-3 py-1 text-xs hover:bg-primary/20">
+                  Leaderboard
+                </a>
+                <a href="/student/courses" className="rounded-full bg-white/5 px-3 py-1 text-xs hover:bg-primary/20">
+                  Courses
+                </a>
+              </div>
+              <div className="mt-2 h-16 rounded-xl bg-gradient-to-r from-primary/10 via-accent/10 to-emerald-400/10 p-[1px]">
+                <div className="h-full rounded-[14px] bg-black/70" />
+              </div>
+            </div>
+          </div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -101,7 +197,7 @@ const StudentDashboard = () => {
             <div>
               <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Announcements</p>
               <div className="mt-3 space-y-3">
-                {(analytics?.announcements || []).slice(0, 3).map((announcement) => (
+                {(recentAnnouncements?.length ? recentAnnouncements : analytics?.announcements || []).slice(0, 3).map((announcement) => (
                   <div key={announcement._id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <div className="flex items-center justify-between text-xs text-slate-400">
                       <span>{announcement.author?.name}</span>
@@ -111,7 +207,7 @@ const StudentDashboard = () => {
                     <p className="text-sm text-slate-300">{announcement.body}</p>
                   </div>
                 ))}
-                {(!analytics?.announcements || analytics.announcements.length === 0) && (
+                {(!recentAnnouncements || recentAnnouncements.length === 0) && (!analytics?.announcements || analytics.announcements.length === 0) && (
                   <p className="text-sm text-slate-400">No announcements yet. Stay tuned!</p>
                 )}
               </div>

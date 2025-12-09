@@ -16,7 +16,9 @@ const quizSchema = new mongoose.Schema(
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     scheduledAt: { type: Date },
     timeLimit: { type: Number }, // in minutes
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
+    approvalStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved' },
+    difficulty: { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' }
   },
   { timestamps: true }
 );

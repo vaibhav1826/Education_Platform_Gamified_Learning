@@ -1,6 +1,8 @@
 ﻿import Quiz from '../models/Quiz.js';
 import Batch from '../models/Batch.js';
 import Submission from '../models/Submission.js';
+import Notification from '../models/Notification.js';
+import { emitToUser, emitToBatch, emitToRole } from '../utils/socket.js';
 
 export const createQuiz = async (req, res) => {
   const { title, instructions, questions, assignedBatches, scheduledAt, timeLimit } = req.body;
@@ -16,6 +18,23 @@ export const createQuiz = async (req, res) => {
     isActive: true
   });
 
+  emitToUser(req.user._id.toString(), 'quiz:created', quiz);
+  if (assignedBatches && assignedBatches.length > 0) {
+    const batches = await Batch.find({ _id: { $in: assignedBatches } });
+    batches.forEach((batch) => {
+      emitToBatch(batch._id.toString(), 'quiz:assigned', quiz);
+      batch.students.forEach((studentId) => {
+        emitToUser(studentId.toString(), 'quiz:assigned', quiz);
+        Notification.create({
+          user: studentId,
+          type: 'system',
+          title: 'New Quiz Assigned',
+          message: `Quiz "${quiz.title}" has been assigned to your batch`,
+          meta: { quizId: quiz._id, batchId: batch._id }
+        }).then(() => emitToUser(studentId.toString(), 'notification:new', { type: 'quiz_assigned' }));
+      });
+    });
+  }
   res.status(201).json(quiz);
 };
 
@@ -50,6 +69,35 @@ export const updateQuiz = async (req, res) => {
     { new: true }
   );
   if (!quiz) return res.status(404).json({ message: 'Quiz not found' });
+  res.json(quiz);
+};
+
+export const assignQuizBatches = async (req, res) => {
+  const { assignedBatches } = req.body;
+  const quiz = await Quiz.findOneAndUpdate(
+    { _id: req.params.id, createdBy: req.user._id },
+    { assignedBatches: assignedBatches || [] },
+    { new: true }
+  );
+  if (!quiz) return res.status(404).json({ message: 'Quiz not found' });
+  
+  if (assignedBatches && assignedBatches.length > 0) {
+    const batches = await Batch.find({ _id: { $in: assignedBatches } });
+    batches.forEach((batch) => {
+      emitToBatch(batch._id.toString(), 'quiz:assigned', quiz);
+      batch.students.forEach((studentId) => {
+        emitToUser(studentId.toString(), 'quiz:assigned', quiz);
+        Notification.create({
+          user: studentId,
+          type: 'system',
+          title: 'New Quiz Assigned',
+          message: `Quiz "${quiz.title}" has been assigned to your batch`,
+          meta: { quizId: quiz._id, batchId: batch._id }
+        }).then(() => emitToUser(studentId.toString(), 'notification:new', { type: 'quiz_assigned' }));
+      });
+    });
+  }
+  emitToUser(req.user._id.toString(), 'quiz:updated', quiz);
   res.json(quiz);
 };
 

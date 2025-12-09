@@ -1,12 +1,34 @@
-// import axios from 'axios'; // TODO: connect to backend API
-
-const mockCourses = [
-  { id: 1, title: 'Intro to React', teacher: 'Priya Sharma', category: 'Web', status: 'Published' },
-  { id: 2, title: 'Data Structures', teacher: 'Alex Carter', category: 'CS Fundamentals', status: 'Draft' },
-  { id: 3, title: 'Gamification 101', teacher: 'Admin User', category: 'Product', status: 'Published' }
-];
+import { useEffect, useState } from 'react';
+import useApi from '../../hooks/useApi.js';
 
 const AdminCourses = () => {
+  const api = useApi();
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { data } = await api.get('/admin/courses');
+        setCourses(data || []);
+      } catch (err) {
+        console.error('Failed to load courses', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [api]);
+
+  const setStatus = async (course, status) => {
+    try {
+      const { data } = await api.patch(`/admin/courses/${course._id}/status`, { status });
+      setCourses((prev) => prev.map((c) => (c._id === course._id ? data : c)));
+    } catch (err) {
+      console.error('Failed to update course', err);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-6xl space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -17,6 +39,8 @@ const AdminCourses = () => {
           </p>
         </div>
       </div>
+
+      {loading ? <p className="text-sm text-slate-400">Loading courses...</p> : null}
 
       <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/40">
         <table className="min-w-full text-left text-sm">
@@ -30,20 +54,22 @@ const AdminCourses = () => {
             </tr>
           </thead>
           <tbody>
-            {mockCourses.map((course) => (
-              <tr key={course.id} className="border-b border-white/5 last:border-0">
+            {courses.map((course) => (
+              <tr key={course._id} className="border-b border-white/5 last:border-0">
                 <td className="px-4 py-3 text-slate-100">{course.title}</td>
-                <td className="px-4 py-3 text-slate-300">{course.teacher}</td>
+                <td className="px-4 py-3 text-slate-300">{course.teacher?.name}</td>
                 <td className="px-4 py-3 text-slate-300">{course.category}</td>
                 <td className="px-4 py-3">
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                      course.status === 'Published'
+                      course.approvalStatus === 'approved'
                         ? 'bg-emerald-500/15 text-emerald-300'
-                        : 'bg-amber-500/15 text-amber-200'
+                        : course.approvalStatus === 'pending'
+                        ? 'bg-amber-500/15 text-amber-200'
+                        : 'bg-rose-500/15 text-rose-200'
                     }`}
                   >
-                    {course.status}
+                    {course.approvalStatus || 'approved'}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right text-xs text-slate-200">
@@ -57,14 +83,14 @@ const AdminCourses = () => {
                   <button
                     type="button"
                     className="rounded-lg border border-white/20 px-2 py-1 text-xs hover:bg-white/10"
-                    // TODO: approve / unpublish via admin API
+                    onClick={() => setStatus(course, course.approvalStatus === 'approved' ? 'rejected' : 'approved')}
                   >
-                    {course.status === 'Published' ? 'Unpublish' : 'Approve'}
+                    {course.approvalStatus === 'approved' ? 'Reject' : 'Approve'}
                   </button>
                 </td>
               </tr>
             ))}
-            {mockCourses.length === 0 && (
+            {courses.length === 0 && !loading && (
               <tr>
                 <td colSpan="5" className="px-4 py-6 text-center text-sm text-slate-400">
                   No courses found.

@@ -7,7 +7,8 @@ import {
   updateQuiz,
   deleteQuiz,
   getQuizSubmissions,
-  getSubmission
+  getSubmission,
+  assignQuizBatches
 } from '../controllers/quizController.js';
 
 const router = Router();
@@ -19,6 +20,7 @@ router.post('/quizzes', createQuiz);
 router.get('/quizzes', getQuizzes);
 router.get('/quizzes/:id', getQuiz);
 router.patch('/quizzes/:id', updateQuiz);
+router.patch('/quizzes/:id/assign', assignQuizBatches);
 router.delete('/quizzes/:id', deleteQuiz);
 router.get('/quizzes/:quizId/submissions', getQuizSubmissions);
 router.get('/submissions/:id', getSubmission);

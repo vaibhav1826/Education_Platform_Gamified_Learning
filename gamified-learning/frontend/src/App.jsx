@@ -31,12 +31,25 @@ import AdminGamification from './pages/admin/AdminGamification.jsx';
 import AdminLeaderboard from './pages/admin/AdminLeaderboard.jsx';
 import AdminReports from './pages/admin/AdminReports.jsx';
 import AdminSettings from './pages/admin/AdminSettings.jsx';
+import AdminBatches from './pages/admin/AdminBatches.jsx';
+import AdminQuizzes from './pages/admin/AdminQuizzes.jsx';
+import AdminSubmissions from './pages/admin/AdminSubmissions.jsx';
+import AdminAnnouncements from './pages/admin/AdminAnnouncements.jsx';
+import AdminNotifications from './pages/admin/AdminNotifications.jsx';
 import CourseList from './pages/CourseList.jsx';
 import CoursePage from './pages/CoursePage.jsx';
 import Lesson from './pages/Lesson.jsx';
 import QuizPage from './pages/QuizPage.jsx';
 import Leaderboard from './pages/Leaderboard.jsx';
-import Profile from './pages/Profile.jsx';
+import StudentBatches from './pages/StudentBatches.jsx';
+import StudentBatchDetails from './pages/StudentBatchDetails.jsx';
+import StudentTests from './pages/StudentTests.jsx';
+import StudentTestDetails from './pages/StudentTestDetails.jsx';
+import StudentTestStart from './pages/StudentTestStart.jsx';
+import StudentTestResult from './pages/StudentTestResult.jsx';
+import StudentLeaderboard from './pages/StudentLeaderboard.jsx';
+import StudentCourses from './pages/StudentCourses.jsx';
+import StudentProfile from './pages/StudentProfile.jsx';
 
 const App = () => (
   <div className="relative min-h-screen bg-midnight text-white overflow-hidden">
@@ -69,6 +82,78 @@ const App = () => (
             element={
               <ProtectedRoute roles={['student']}>
                 <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/batches"
+            element={
+              <ProtectedRoute roles={['student']}>
+                <StudentBatches />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/batches/:batchId"
+            element={
+              <ProtectedRoute roles={['student']}>
+                <StudentBatchDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/tests"
+            element={
+              <ProtectedRoute roles={['student']}>
+                <StudentTests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/tests/:quizId"
+            element={
+              <ProtectedRoute roles={['student']}>
+                <StudentTestDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/tests/:quizId/start"
+            element={
+              <ProtectedRoute roles={['student']}>
+                <StudentTestStart />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/tests/:quizId/result"
+            element={
+              <ProtectedRoute roles={['student']}>
+                <StudentTestResult />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/leaderboard"
+            element={
+              <ProtectedRoute roles={['student']}>
+                <StudentLeaderboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/courses"
+            element={
+              <ProtectedRoute roles={['student']}>
+                <StudentCourses />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/profile"
+            element={
+              <ProtectedRoute roles={['student']}>
+                <StudentProfile />
               </ProtectedRoute>
             }
           />
@@ -106,8 +191,13 @@ const App = () => (
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="courses" element={<AdminCourses />} />
+            <Route path="batches" element={<AdminBatches />} />
+            <Route path="quizzes" element={<AdminQuizzes />} />
+            <Route path="submissions" element={<AdminSubmissions />} />
             <Route path="gamification" element={<AdminGamification />} />
             <Route path="leaderboard" element={<AdminLeaderboard />} />
+            <Route path="announcements" element={<AdminAnnouncements />} />
+            <Route path="notifications" element={<AdminNotifications />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
@@ -155,7 +245,7 @@ const App = () => (
             path="/profile"
             element={
               <ProtectedRoute>
-                <Profile />
+                <StudentProfile />
               </ProtectedRoute>
             }
           />

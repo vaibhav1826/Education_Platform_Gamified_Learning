@@ -1,12 +1,17 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, BookOpen, Sparkles, Trophy, BarChart3, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, BookOpen, Sparkles, Trophy, BarChart3, Settings, Megaphone, Bell, Layers, ListChecks } from 'lucide-react';
 
 const navItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/courses', label: 'Courses', icon: BookOpen },
+  { to: '/admin/batches', label: 'Batches', icon: Layers },
+  { to: '/admin/quizzes', label: 'Quizzes', icon: ListChecks },
+  { to: '/admin/submissions', label: 'Submissions', icon: BarChart3 },
   { to: '/admin/gamification', label: 'Gamification', icon: Sparkles },
   { to: '/admin/leaderboard', label: 'Leaderboard', icon: Trophy },
+  { to: '/admin/announcements', label: 'Announcements', icon: Megaphone },
+  { to: '/admin/notifications', label: 'Notifications', icon: Bell },
   { to: '/admin/reports', label: 'Reports', icon: BarChart3 },
   { to: '/admin/settings', label: 'Settings', icon: Settings }
 ];

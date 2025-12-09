@@ -2,6 +2,9 @@ import Batch from '../models/Batch.js';
 import Quiz from '../models/Quiz.js';
 import Submission from '../models/Submission.js';
 import User from '../models/User.js';
+import Announcement from '../models/Announcement.js';
+import Notification from '../models/Notification.js';
+import { emitToUser, emitToBatch, emitToRole, emitToAll } from '../utils/socket.js';
 
 export const getDashboard = async (req, res) => {
   const teacherId = req.user._id;
@@ -59,18 +62,20 @@ export const createBatch = async (req, res) => {
     subject: subject?.trim() || undefined,
     students: []
   });
+  emitToUser(req.user._id.toString(), 'batch:created', batch);
+  emitToRole('teacher', 'batch:updated', { type: 'created', batch });
   res.status(201).json(batch);
 };
 
 export const getBatches = async (req, res) => {
-  const batches = await Batch.find({ teacher: req.user._id })
+  const batches = await Batch.find({ teacher: req.user._id, disabled: { $ne: true } })
     .populate('students', 'name email profileImage')
     .sort({ createdAt: -1 });
   res.json(batches);
 };
 
 export const getBatch = async (req, res) => {
-  const batch = await Batch.findOne({ _id: req.params.id, teacher: req.user._id })
+  const batch = await Batch.findOne({ _id: req.params.id, teacher: req.user._id, disabled: { $ne: true } })
     .populate('students', 'name email profileImage role')
     .populate('teacher', 'name email profileImage');
   if (!batch) return res.status(404).json({ message: 'Batch not found' });
@@ -89,6 +94,9 @@ export const updateBatch = async (req, res) => {
     { new: true }
   );
   if (!batch) return res.status(404).json({ message: 'Batch not found' });
+  emitToBatch(batch._id.toString(), 'batch:updated', batch);
+  batch.students.forEach((studentId) => emitToUser(studentId.toString(), 'batch:updated', batch));
+  emitToUser(req.user._id.toString(), 'batch:updated', batch);
   res.json(batch);
 };
 
@@ -132,6 +140,9 @@ export const addStudentToBatch = async (req, res) => {
   }
 
   const updated = await Batch.findById(batch._id).populate('students', 'name email profileImage');
+  emitToUser(studentId.toString(), 'batch:joined', updated);
+  emitToBatch(batch._id.toString(), 'batch:updated', updated);
+  emitToUser(req.user._id.toString(), 'batch:updated', updated);
   res.json(updated);
 };
 
@@ -224,5 +235,43 @@ export const getGlobalLeaderboard = async (req, res) => {
   });
 
   res.json(leaderboard);
+};
+
+export const getAdminAnnouncementsForTeacher = async (_req, res) => {
+  const announcements = await Announcement.find({ $or: [{ target: 'all' }, { target: 'teachers' }] })
+    .sort({ createdAt: -1 })
+    .limit(20);
+  res.json(announcements);
+};
+
+export const createBatchAnnouncement = async (req, res) => {
+  const batch = await Batch.findOne({ _id: req.params.id, teacher: req.user._id });
+  if (!batch) return res.status(404).json({ message: 'Batch not found' });
+  const { title, body } = req.body;
+  const announcement = await Announcement.create({
+    batch: batch._id,
+    audience: 'batch',
+    title,
+    body,
+    author: req.user._id
+  });
+  await announcement.populate('author', 'name profileImage');
+  // notify students
+  const notifications = batch.students.map((s) => ({
+    user: s,
+    type: 'announcement',
+    title,
+    message: body,
+    meta: { batchId: batch._id, announcementId: announcement._id }
+  }));
+  if (notifications.length) {
+    await Notification.insertMany(notifications);
+    batch.students.forEach((studentId) => {
+      emitToUser(studentId.toString(), 'announcement:new', announcement);
+      emitToUser(studentId.toString(), 'notification:new', notifications.find((n) => n.user.toString() === studentId.toString()));
+    });
+  }
+  emitToBatch(batch._id.toString(), 'announcement:new', announcement);
+  res.status(201).json(announcement);
 };
 

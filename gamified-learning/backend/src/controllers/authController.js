@@ -94,6 +94,10 @@ export const login = async (req, res) => {
     return res.status(400).json({ message: `Account is registered as ${user.role}. Please switch role.` });
   }
 
+  if (user.status === 'inactive') {
+    return res.status(403).json({ message: 'Account inactive. Contact admin.' });
+  }
+
   if (user.authProvider !== 'credentials') {
     return res.status(400).json({ message: 'Use Google sign-in for this account.' });
   }

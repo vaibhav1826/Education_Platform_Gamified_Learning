@@ -19,6 +19,8 @@ const userSchema = new mongoose.Schema(
     specialization: { type: String, trim: true },
     experience: { type: Number, min: 0 },
     role: { type: String, enum: ['student', 'teacher', 'admin'], required: true, default: 'student' },
+    status: { type: String, enum: ['active', 'inactive'], default: 'active', index: true },
+    status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     authProvider: { type: String, enum: ['credentials', 'google'], default: 'credentials' },
     xp: { type: Number, default: 0 },
     level: { type: Number, default: 1 },

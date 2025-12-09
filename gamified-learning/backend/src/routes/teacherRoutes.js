@@ -11,8 +11,11 @@ import {
   addStudentToBatch,
   removeStudentFromBatch,
   getBatchLeaderboard,
-  getGlobalLeaderboard
+  getGlobalLeaderboard,
+  createBatchAnnouncement,
+  getAdminAnnouncementsForTeacher
 } from '../controllers/teacherController.js';
+import { getNotifications } from '../controllers/notificationController.js';
 
 const router = Router();
 
@@ -29,7 +32,10 @@ router.delete('/batches/:id', deleteBatch);
 router.post('/batches/:batchId/students', addStudentToBatch);
 router.delete('/batches/:batchId/students/:studentId', removeStudentFromBatch);
 router.get('/batches/:id/leaderboard', getBatchLeaderboard);
+router.post('/batches/:id/announcements', createBatchAnnouncement);
 router.get('/leaderboard/global', getGlobalLeaderboard);
+router.get('/announcements/admin', getAdminAnnouncementsForTeacher);
+router.get('/notifications', getNotifications);
 
 export default router;
 

@@ -11,6 +11,7 @@ const submissionSchema = new mongoose.Schema(
     student: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     quiz: { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz', required: true },
     batch: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch', required: true },
+    teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     score: { type: Number, default: 0 },
     totalQuestions: { type: Number, required: true },
     correctAnswers: { type: Number, default: 0 },
@@ -23,6 +24,7 @@ const submissionSchema = new mongoose.Schema(
 submissionSchema.index({ student: 1, quiz: 1 });
 submissionSchema.index({ batch: 1 });
 submissionSchema.index({ quiz: 1 });
+submissionSchema.index({ teacher: 1 });
 
 export default mongoose.model('Submission', submissionSchema);
 
