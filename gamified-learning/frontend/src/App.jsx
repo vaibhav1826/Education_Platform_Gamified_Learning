@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from 'react-router-dom';
+﻿import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import Hyperspeed from './components/Hyperspeed.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -51,210 +51,244 @@ import StudentLeaderboard from './pages/StudentLeaderboard.jsx';
 import StudentCourses from './pages/StudentCourses.jsx';
 import StudentProfile from './pages/StudentProfile.jsx';
 
-const App = () => (
-  <div className="relative min-h-screen bg-midnight text-white overflow-hidden">
-    {/* Global hyperspeed background for all pages */}
-    <Hyperspeed presetKey="neoAurora" />
+const App = () => {
+  const location = useLocation();
 
-    {/* Subtle overlay grid and glow on top of hyperspeed */}
-    <div className="pointer-events-none absolute inset-0 bg-hero-grid opacity-30 [background-size:120px_120px]" aria-hidden />
-    <div
-      className="pointer-events-none absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-gradient-to-r from-primary/30 via-accent/20 to-rose-500/30 blur-[140px]"
-      aria-hidden
-    />
-    <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-midnight/60 to-black/80" aria-hidden />
+  // ❌ Hide Navbar on all admin pages
+  const hideNavbar = location.pathname.startsWith("/admin");
 
-    <div className="relative z-10 flex min-h-screen flex-col">
-      <Navbar />
-      <div className="flex-1">
-        <Routes>
-          <Route path="/login" element={<LoginRoleSelect />} />
-          <Route path="/login/student" element={<StudentLogin />} />
-          <Route path="/login/teacher" element={<TeacherLogin />} />
-          <Route path="/login/admin" element={<AdminLogin />} />
-          <Route path="/choose-role" element={<ChooseRole />} />
-          <Route path="/signup" element={<Navigate to="/choose-role" replace />} />
-          <Route path="/signup/student" element={<StudentSignup />} />
-          <Route path="/signup/teacher" element={<TeacherSignup />} />
-          <Route path="/signup/admin" element={<AdminSignup />} />
-          <Route
-            path="/student/dashboard"
-            element={
-              <ProtectedRoute roles={['student']}>
-                <StudentDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/batches"
-            element={
-              <ProtectedRoute roles={['student']}>
-                <StudentBatches />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/batches/:batchId"
-            element={
-              <ProtectedRoute roles={['student']}>
-                <StudentBatchDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/tests"
-            element={
-              <ProtectedRoute roles={['student']}>
-                <StudentTests />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/tests/:quizId"
-            element={
-              <ProtectedRoute roles={['student']}>
-                <StudentTestDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/tests/:quizId/start"
-            element={
-              <ProtectedRoute roles={['student']}>
-                <StudentTestStart />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/tests/:quizId/result"
-            element={
-              <ProtectedRoute roles={['student']}>
-                <StudentTestResult />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/leaderboard"
-            element={
-              <ProtectedRoute roles={['student']}>
-                <StudentLeaderboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/courses"
-            element={
-              <ProtectedRoute roles={['student']}>
-                <StudentCourses />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/profile"
-            element={
-              <ProtectedRoute roles={['student']}>
-                <StudentProfile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/teacher/*"
-            element={
-              <ProtectedRoute roles={['teacher', 'admin']}>
-                <TeacherLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<TeacherDashboard />} />
-            <Route path="batches" element={<Batches />} />
-            <Route path="batches/create" element={<CreateBatch />} />
-            <Route path="batches/:id" element={<BatchDetails />} />
-            <Route path="batches/:id/leaderboard" element={<BatchLeaderboard />} />
-            <Route path="quizzes" element={<Quizzes />} />
-            <Route path="quizzes/create" element={<CreateQuiz />} />
-            <Route path="quizzes/:id" element={<QuizDetails />} />
-            <Route path="quizzes/:quizId/submissions" element={<SubmissionsList />} />
-            <Route path="submissions/:id" element={<SubmissionDetails />} />
-            <Route path="leaderboard" element={<GlobalLeaderboard />} />
-            <Route path="settings" element={<div className="p-6"><h1 className="text-2xl text-white">Settings</h1><p className="text-slate-400">Coming soon</p></div>} />
-          </Route>
-          <Route
-            path="/admin/*"
-            element={
-              <ProtectedRoute roles={['admin']}>
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="courses" element={<AdminCourses />} />
-            <Route path="batches" element={<AdminBatches />} />
-            <Route path="quizzes" element={<AdminQuizzes />} />
-            <Route path="submissions" element={<AdminSubmissions />} />
-            <Route path="gamification" element={<AdminGamification />} />
-            <Route path="leaderboard" element={<AdminLeaderboard />} />
-            <Route path="announcements" element={<AdminAnnouncements />} />
-            <Route path="notifications" element={<AdminNotifications />} />
-            <Route path="reports" element={<AdminReports />} />
-            <Route path="settings" element={<AdminSettings />} />
-          </Route>
-          <Route
-            path="/courses"
-            element={
-              <ProtectedRoute>
-                <CourseList />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/courses/:id"
-            element={
-              <ProtectedRoute>
-                <CoursePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/lessons/:id"
-            element={
-              <ProtectedRoute>
-                <Lesson />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/quiz/:id"
-            element={
-              <ProtectedRoute>
-                <QuizPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/leaderboard"
-            element={
-              <ProtectedRoute>
-                <Leaderboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <StudentProfile />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
-        </Routes>
+  return (
+    <div className="relative min-h-screen bg-midnight text-white overflow-hidden">
+      <Hyperspeed presetKey="neoAurora" />
+
+      <div className="pointer-events-none absolute inset-0 bg-hero-grid opacity-30 [background-size:120px_120px]" aria-hidden />
+      <div
+        className="pointer-events-none absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-gradient-to-r from-primary/30 via-accent/20 to-rose-500/30 blur-[140px]"
+        aria-hidden
+      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-midnight/60 to-black/80" aria-hidden />
+
+      <div className="relative z-10 flex min-h-screen flex-col">
+
+        {/* ✅ Navbar visible everywhere except admin pages */}
+        {!hideNavbar && <Navbar />}
+
+        <div className="flex-1">
+          <Routes>
+
+            {/* Auth Routes */}
+            <Route path="/login" element={<LoginRoleSelect />} />
+            <Route path="/login/student" element={<StudentLogin />} />
+            <Route path="/login/teacher" element={<TeacherLogin />} />
+            <Route path="/login/admin" element={<AdminLogin />} />
+            <Route path="/choose-role" element={<ChooseRole />} />
+            <Route path="/signup" element={<Navigate to="/choose-role" replace />} />
+            <Route path="/signup/student" element={<StudentSignup />} />
+            <Route path="/signup/teacher" element={<TeacherSignup />} />
+            <Route path="/signup/admin" element={<AdminSignup />} />
+
+            {/* Student Routes */}
+            <Route
+              path="/student/dashboard"
+              element={
+                <ProtectedRoute roles={['student']}>
+                  <StudentDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/student/batches"
+              element={
+                <ProtectedRoute roles={['student']}>
+                  <StudentBatches />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/student/batches/:batchId"
+              element={
+                <ProtectedRoute roles={['student']}>
+                  <StudentBatchDetails />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/student/tests"
+              element={
+                <ProtectedRoute roles={['student']}>
+                  <StudentTests />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/student/tests/:quizId"
+              element={
+                <ProtectedRoute roles={['student']}>
+                  <StudentTestDetails />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/student/tests/:quizId/start"
+              element={
+                <ProtectedRoute roles={['student']}>
+                  <StudentTestStart />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/student/tests/:quizId/result"
+              element={
+                <ProtectedRoute roles={['student']}>
+                  <StudentTestResult />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/student/leaderboard"
+              element={
+                <ProtectedRoute roles={['student']}>
+                  <StudentLeaderboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/student/courses"
+              element={
+                <ProtectedRoute roles={['student']}>
+                  <StudentCourses />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/student/profile"
+              element={
+                <ProtectedRoute roles={['student']}>
+                  <StudentProfile />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Teacher Routes */}
+            <Route
+              path="/teacher/*"
+              element={
+                <ProtectedRoute roles={['teacher', 'admin']}>
+                  <TeacherLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<TeacherDashboard />} />
+              <Route path="batches" element={<Batches />} />
+              <Route path="batches/create" element={<CreateBatch />} />
+              <Route path="batches/:id" element={<BatchDetails />} />
+              <Route path="batches/:id/leaderboard" element={<BatchLeaderboard />} />
+              <Route path="quizzes" element={<Quizzes />} />
+              <Route path="quizzes/create" element={<CreateQuiz />} />
+              <Route path="quizzes/:id" element={<QuizDetails />} />
+              <Route path="quizzes/:quizId/submissions" element={<SubmissionsList />} />
+              <Route path="submissions/:id" element={<SubmissionDetails />} />
+              <Route path="leaderboard" element={<GlobalLeaderboard />} />
+            </Route>
+
+            {/* Admin Routes (NO NAVBAR HERE) */}
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute roles={['admin']}>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="courses" element={<AdminCourses />} />
+              <Route path="batches" element={<AdminBatches />} />
+              <Route path="quizzes" element={<AdminQuizzes />} />
+              <Route path="submissions" element={<AdminSubmissions />} />
+              <Route path="gamification" element={<AdminGamification />} />
+              <Route path="leaderboard" element={<AdminLeaderboard />} />
+              <Route path="announcements" element={<AdminAnnouncements />} />
+              <Route path="notifications" element={<AdminNotifications />} />
+              <Route path="reports" element={<AdminReports />} />
+              <Route path="settings" element={<AdminSettings />} />
+            </Route>
+
+            {/* Common Routes */}
+            <Route
+              path="/courses"
+              element={
+                <ProtectedRoute>
+                  <CourseList />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/courses/:id"
+              element={
+                <ProtectedRoute>
+                  <CoursePage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/lessons/:id"
+              element={
+                <ProtectedRoute>
+                  <Lesson />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/quiz/:id"
+              element={
+                <ProtectedRoute>
+                  <QuizPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/leaderboard"
+              element={
+                <ProtectedRoute>
+                  <Leaderboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <StudentProfile />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Default Routes */}
+            <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
+
+          </Routes>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default App;
