@@ -11,6 +11,8 @@ import ChooseRole from './pages/ChooseRole.jsx';
 import StudentSignup from './pages/signup/StudentSignup.jsx';
 import TeacherSignup from './pages/signup/TeacherSignup.jsx';
 import AdminSignup from './pages/signup/AdminSignup.jsx';
+import CourseManager from './pages/CourseManager.jsx';
+import AssignmentGrading from './pages/teacher/AssignmentGrading.jsx';
 import StudentDashboard from './pages/StudentDashboard.jsx';
 import TeacherLayout from './components/teacher/TeacherLayout.jsx';
 import TeacherDashboard from './pages/teacher/TeacherDashboard.jsx';
@@ -40,6 +42,7 @@ import CourseList from './pages/CourseList.jsx';
 import CoursePage from './pages/CoursePage.jsx';
 import Lesson from './pages/Lesson.jsx';
 import QuizPage from './pages/QuizPage.jsx';
+import DiscussionDetail from './pages/DiscussionDetail.jsx';
 import Leaderboard from './pages/Leaderboard.jsx';
 import StudentBatches from './pages/StudentBatches.jsx';
 import StudentBatchDetails from './pages/StudentBatchDetails.jsx';
@@ -199,6 +202,8 @@ const App = () => {
               <Route path="quizzes/:quizId/submissions" element={<SubmissionsList />} />
               <Route path="submissions/:id" element={<SubmissionDetails />} />
               <Route path="leaderboard" element={<GlobalLeaderboard />} />
+              <Route path="course/:id/edit" element={<CourseManager />} />
+              <Route path="assignments/:assignmentId/grading" element={<AssignmentGrading />} />
             </Route>
 
             {/* Admin Routes (NO NAVBAR HERE) */}
@@ -258,6 +263,15 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <QuizPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/discussions/:id"
+              element={
+                <ProtectedRoute>
+                  <DiscussionDetail />
                 </ProtectedRoute>
               }
             />

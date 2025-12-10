@@ -6,7 +6,8 @@
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "seed": "node src/seed/seedData.js",
-    "seed:teacher": "node src/scripts/seedTeacherData.js"
+    "seed:teacher": "node src/scripts/seedTeacherData.js",
+    "seed:full": "node src/seed/comprehensiveSeed.js"
   },
   "dependencies": {
     "@react-oauth/google": "^0.12.2",

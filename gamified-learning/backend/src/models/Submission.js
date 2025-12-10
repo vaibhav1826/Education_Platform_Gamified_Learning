@@ -9,13 +9,18 @@ const answerSchema = new mongoose.Schema({
 const submissionSchema = new mongoose.Schema(
   {
     student: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    quiz: { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz', required: true },
+    type: { type: String, enum: ['quiz', 'assignment'], default: 'quiz' },
+    quiz: { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz' },
+    assignment: { type: mongoose.Schema.Types.ObjectId, ref: 'Assignment' },
     batch: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch', required: true },
     teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     score: { type: Number, default: 0 },
     totalQuestions: { type: Number, required: true },
     correctAnswers: { type: Number, default: 0 },
-    answers: [answerSchema],
+    answers: [answerSchema], // For quizzes
+    fileUrl: { type: String }, // For assignments
+    feedback: { type: String }, // Teacher feedback
+    status: { type: String, enum: ['submitted', 'graded'], default: 'submitted' },
     submittedAt: { type: Date, default: Date.now }
   },
   { timestamps: true }

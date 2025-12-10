@@ -31,6 +31,7 @@ const courseSchema = new mongoose.Schema(
 );
 
 courseSchema.index({ teacher: 1 });
-courseSchema.index({ title: 'text', description: 'text', tags: 1 });
+courseSchema.index({ title: 'text', description: 'text' });
+courseSchema.index({ tags: 1 });
 
 export default mongoose.model('Course', courseSchema);
