@@ -20,9 +20,12 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import teacherRoutes from './routes/teacherRoutes.js';
+<<<<<<< HEAD
 import teacherQuizRoutes from './routes/quizRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
+=======
+>>>>>>> 1a576f01643b7cd998e99e61826746670e432b79
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -68,9 +71,13 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/teacher', teacherRoutes);
+<<<<<<< HEAD
 app.use('/api/teacher', teacherQuizRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/student', studentRoutes);
+=======
+app.use('/api/teacher', quizRoutes);
+>>>>>>> 1a576f01643b7cd998e99e61826746670e432b79
 
 app.use(celebrateErrors());
 app.use(notFound);
