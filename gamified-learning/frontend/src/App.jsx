@@ -1,4 +1,5 @@
 ﻿import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useAuthContext } from './context/AuthContext.jsx';
 import Navbar from './components/Navbar.jsx';
 import Hyperspeed from './components/Hyperspeed.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -53,9 +54,14 @@ import StudentTestResult from './pages/StudentTestResult.jsx';
 import StudentLeaderboard from './pages/StudentLeaderboard.jsx';
 import StudentCourses from './pages/StudentCourses.jsx';
 import StudentProfile from './pages/StudentProfile.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
+import LandingPage from './pages/LandingPage.jsx';
+import NotFound from './pages/NotFound.jsx';
 
 const App = () => {
   const location = useLocation();
+  const { user, loading } = useAuthContext();
 
   // ❌ Hide Navbar on all admin pages
   const hideNavbar = location.pathname.startsWith("/admin");
@@ -89,6 +95,8 @@ const App = () => {
             <Route path="/signup/student" element={<StudentSignup />} />
             <Route path="/signup/teacher" element={<TeacherSignup />} />
             <Route path="/signup/admin" element={<AdminSignup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
 
             {/* Student Routes */}
             <Route
@@ -295,8 +303,21 @@ const App = () => {
             />
 
             {/* Default Routes */}
-            <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
+            <Route
+              path="/"
+              element={
+                loading ? null : user ? (
+                  <Navigate to={
+                    user.role === 'admin' ? '/admin/dashboard' :
+                      user.role === 'teacher' ? '/teacher/dashboard' :
+                        '/student/dashboard'
+                  } replace />
+                ) : (
+                  <LandingPage />
+                )
+              }
+            />
+            <Route path="*" element={<NotFound />} />
 
           </Routes>
         </div>

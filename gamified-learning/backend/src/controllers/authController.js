@@ -1,9 +1,11 @@
 ﻿import { OAuth2Client } from 'google-auth-library';
 import validator from 'validator';
+import crypto from 'crypto';
 import User from '../models/User.js';
 import Badge from '../models/Badge.js';
 import { generateTokens, attachRefreshToken, clearRefreshToken } from '../utils/token.js';
 import { applyGamificationEvent } from '../utils/gamification.js';
+import { sendMail } from '../utils/email.js';
 
 const ROLE_OPTIONS = ['student', 'teacher', 'admin'];
 const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || 'dev-admin-secret';
@@ -172,4 +174,91 @@ export const seedBadges = async (_req, res) => {
     { name: 'Quiz Hero', description: 'Perfect quiz score', type: 'achievement', criteria: 'perfect_quiz' }
   ]);
   res.json(badges);
+};
+
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  const normalizedEmail = normalizeEmail(email);
+
+  // Always return success message for security (don't reveal if email exists)
+  const successMessage = { message: 'If an account exists with this email, a password reset link will be sent.' };
+
+  const user = await User.findOne({ email: normalizedEmail });
+  if (!user) {
+    return res.json(successMessage);
+  }
+
+  // Users who signed up with Google can't reset password
+  if (user.authProvider === 'google') {
+    return res.json(successMessage);
+  }
+
+  // Generate reset token
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  // Save hashed token and expiry (1 hour)
+  user.resetPasswordToken = hashedToken;
+  user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
+  await user.save();
+
+  // Build reset URL
+  const clientUrl = process.env.CLIENT_URL || process.env.CLIENT_URLS?.split(',')[0] || 'http://localhost:5173';
+  const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
+
+  // Send email
+  try {
+    await sendMail({
+      to: user.email,
+      subject: 'Password Reset Request - Gamified Learning',
+      html: `
+        <h2>Password Reset Request</h2>
+        <p>Hello ${user.name},</p>
+        <p>You requested a password reset. Click the link below to set a new password:</p>
+        <p><a href="${resetUrl}" style="display:inline-block;padding:12px 24px;background:#6366f1;color:white;text-decoration:none;border-radius:8px;">Reset Password</a></p>
+        <p>Or copy this link: ${resetUrl}</p>
+        <p>This link expires in 1 hour.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+      `
+    });
+  } catch (err) {
+    console.error('Email send error:', err);
+    // Log the reset URL for development when email is not configured
+    console.log('Password reset link (dev):', resetUrl);
+  }
+
+  res.json(successMessage);
+};
+
+export const resetPassword = async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  if (!password || password.length < 8) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+  }
+
+  if (!validator.isStrongPassword(password, { minSymbols: 0 })) {
+    return res.status(400).json({ message: 'Password must include upper, lower case letters and numbers.' });
+  }
+
+  // Hash the token from URL to compare with stored hash
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  const user = await User.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpires: { $gt: new Date() }
+  });
+
+  if (!user) {
+    return res.status(400).json({ message: 'Invalid or expired reset token.' });
+  }
+
+  // Update password and clear reset fields
+  user.password = password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  res.json({ message: 'Password reset successful. You can now log in with your new password.' });
 };

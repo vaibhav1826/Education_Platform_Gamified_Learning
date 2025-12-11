@@ -23,12 +23,18 @@ import {
   getAdminStudentLeaderboard,
   getAdminTeacherLeaderboard,
   getSettings,
-  updateSettings
+  updateSettings,
+  updateAdminOwnProfile,
+  changeAdminPassword
 } from '../controllers/adminController.js';
 
 const router = Router();
 
 router.use(protect, authorize('admin'));
+
+// Admin own profile
+router.patch('/profile', updateAdminOwnProfile);
+router.post('/change-password', changeAdminPassword);
 
 // Users
 router.get('/teachers', listTeachers);
@@ -68,4 +74,5 @@ router.get('/settings', getSettings);
 router.patch('/settings', updateSettings);
 
 export default router;
+
 

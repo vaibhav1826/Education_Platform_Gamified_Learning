@@ -1,6 +1,6 @@
 ﻿import { Router } from 'express';
 import { celebrate, Joi, Segments } from 'celebrate';
-import { signup, login, googleAuth, refresh, logout, me, seedBadges } from '../controllers/authController.js';
+import { signup, login, googleAuth, refresh, logout, me, seedBadges, forgotPassword, resetPassword } from '../controllers/authController.js';
 import { protect, authorize, refreshGuard } from '../middleware/authMiddleware.js';
 
 const router = Router();
@@ -54,5 +54,26 @@ router.post('/refresh', refreshGuard, refresh);
 router.post('/logout', protect, logout);
 router.get('/me', protect, me);
 router.post('/seed/badges', protect, authorize('admin'), seedBadges);
+
+// Password reset endpoints
+router.post(
+  '/forgot-password',
+  celebrate({
+    [Segments.BODY]: Joi.object({
+      email: Joi.string().email().required()
+    })
+  }),
+  forgotPassword
+);
+
+router.post(
+  '/reset-password/:token',
+  celebrate({
+    [Segments.BODY]: Joi.object({
+      password: Joi.string().min(8).required()
+    })
+  }),
+  resetPassword
+);
 
 export default router;
