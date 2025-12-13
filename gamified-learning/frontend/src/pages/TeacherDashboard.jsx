@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import useCourses from '../hooks/useCourses.js';
@@ -317,6 +318,11 @@ const TeacherDashboard = () => {
                 <span>{course.modules?.length || 0} modules</span>
                 <span>&#x2022;</span>
                 <span>{course.category || 'General'}</span>
+              </div>
+              <div className="pt-2">
+                <Link to={`/teacher/course/${course._id}/edit`} className="block w-full rounded-xl bg-white/5 py-2 text-center text-sm font-semibold text-slate-300 transition-colors hover:bg-white/10 hover:text-white">
+                  Manage Content
+                </Link>
               </div>
             </div>
           ))}

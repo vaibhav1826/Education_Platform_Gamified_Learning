@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import useApi from '../../hooks/useApi.js';
 
 const AdminCourses = () => {
@@ -61,25 +62,23 @@ const AdminCourses = () => {
                 <td className="px-4 py-3 text-slate-300">{course.category}</td>
                 <td className="px-4 py-3">
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                      course.approvalStatus === 'approved'
-                        ? 'bg-emerald-500/15 text-emerald-300'
-                        : course.approvalStatus === 'pending'
+                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${course.approvalStatus === 'approved'
+                      ? 'bg-emerald-500/15 text-emerald-300'
+                      : course.approvalStatus === 'pending'
                         ? 'bg-amber-500/15 text-amber-200'
                         : 'bg-rose-500/15 text-rose-200'
-                    }`}
+                      }`}
                   >
                     {course.approvalStatus || 'approved'}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right text-xs text-slate-200">
-                  <button
-                    type="button"
-                    className="mr-2 rounded-lg border border-white/20 px-2 py-1 text-xs hover:bg-white/10"
-                    // TODO: open course details drawer / modal
+                  <Link
+                    to={`/courses/${course._id}`}
+                    className="mr-2 rounded-lg border border-white/20 px-2 py-1 text-xs hover:bg-white/10 inline-block"
                   >
                     View
-                  </button>
+                  </Link>
                   <button
                     type="button"
                     className="rounded-lg border border-white/20 px-2 py-1 text-xs hover:bg-white/10"

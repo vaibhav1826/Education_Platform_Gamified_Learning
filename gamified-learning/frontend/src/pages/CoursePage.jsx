@@ -1,11 +1,13 @@
 ﻿import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import useCourse from '../hooks/useCourse.js';
+import DiscussionList from '../components/discussion/DiscussionList.jsx';
 
 const CoursePage = () => {
   const { id } = useParams();
   const { course, announcements, enroll } = useCourse(id);
   const [enrolling, setEnrolling] = useState(false);
+  const [activeTab, setActiveTab] = useState('curriculum');
 
   if (!course) return <p className="p-6">Loading course...</p>;
 
@@ -47,49 +49,81 @@ const CoursePage = () => {
         </div>
       </header>
 
-      <section className="space-y-4">
-        <h3 className="text-2xl font-semibold">Curriculum</h3>
-        {course.modules?.map((module) => (
-          <div key={module._id} className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xl font-semibold">{module.title}</h4>
-              <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                {module.lessons?.length || 0} lessons
-              </span>
-            </div>
-            <ul className="space-y-2 text-sm">
-              {module.lessons?.map((lesson) => (
-                <li key={lesson._id} className="flex items-center justify-between rounded-xl bg-black/30 px-4 py-2">
-                  <div>
-                    <p className="font-semibold text-white">{lesson.title}</p>
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">{lesson.durationMinutes} min • {lesson.contentType}</p>
-                  </div>
-                  <Link to={`/lessons/${lesson._id}`} className="text-accent text-sm font-semibold">
-                    Start &rarr;
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </section>
+      <div className="flex space-x-6 border-b border-white/10 pb-4">
+        <button
+          onClick={() => setActiveTab('curriculum')}
+          className={`pb-2 text-sm font-semibold transition-colors ${activeTab === 'curriculum' ? 'border-b-2 border-primary text-primary' : 'text-slate-400 hover:text-white'}`}
+        >
+          Curriculum
+        </button>
+        <button
+          onClick={() => setActiveTab('announcements')}
+          className={`pb-2 text-sm font-semibold transition-colors ${activeTab === 'announcements' ? 'border-b-2 border-primary text-primary' : 'text-slate-400 hover:text-white'}`}
+        >
+          Announcements
+        </button>
+        <button
+          onClick={() => setActiveTab('discussions')}
+          className={`pb-2 text-sm font-semibold transition-colors ${activeTab === 'discussions' ? 'border-b-2 border-primary text-primary' : 'text-slate-400 hover:text-white'}`}
+        >
+          Discussions (Q&A)
+        </button>
+      </div>
 
-      <section className="space-y-3">
-        <h3 className="text-2xl font-semibold">Announcements</h3>
-        <div className="space-y-3">
-          {announcements.map((announcement) => (
-            <div key={announcement._id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <span>{announcement.author?.name}</span>
-                <span>{new Date(announcement.createdAt).toLocaleString()}</span>
+      {activeTab === 'curriculum' && (
+        <section className="space-y-4">
+          <h3 className="text-2xl font-semibold">Curriculum</h3>
+          {course.modules?.map((module) => (
+            <div key={module._id} className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xl font-semibold">{module.title}</h4>
+                <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                  {module.lessons?.length || 0} lessons
+                </span>
               </div>
-              <h4 className="mt-2 text-lg font-semibold">{announcement.title}</h4>
-              <p className="text-sm text-slate-300">{announcement.body}</p>
+              <ul className="space-y-2 text-sm">
+                {module.lessons?.map((lesson) => (
+                  <li key={lesson._id} className="flex items-center justify-between rounded-xl bg-black/30 px-4 py-2">
+                    <div>
+                      <p className="font-semibold text-white">{lesson.title}</p>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">{lesson.durationMinutes} min • {lesson.contentType}</p>
+                    </div>
+                    <Link to={`/lessons/${lesson._id}`} className="text-accent text-sm font-semibold">
+                      Start &rarr;
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
           ))}
-          {announcements.length === 0 && <p className="text-sm text-slate-400">No announcements yet.</p>}
-        </div>
-      </section>
+        </section>
+      )}
+
+      {activeTab === 'announcements' && (
+        <section className="space-y-3">
+          <h3 className="text-2xl font-semibold">Announcements</h3>
+          <div className="space-y-3">
+            {announcements.map((announcement) => (
+              <div key={announcement._id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span>{announcement.author?.name}</span>
+                  <span>{new Date(announcement.createdAt).toLocaleString()}</span>
+                </div>
+                <h4 className="mt-2 text-lg font-semibold">{announcement.title}</h4>
+                <p className="text-sm text-slate-300">{announcement.body}</p>
+              </div>
+            ))}
+            {announcements.length === 0 && <p className="text-sm text-slate-400">No announcements yet.</p>}
+          </div>
+        </section>
+      )}
+
+      {activeTab === 'discussions' && (
+        <section className="space-y-3">
+          <DiscussionList />
+        </section>
+      )}
+
     </div>
   );
 };

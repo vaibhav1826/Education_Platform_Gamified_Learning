@@ -3,7 +3,7 @@ import { useAuthContext } from '../../context/AuthContext.jsx';
 import useApi from '../../hooks/useApi.js';
 
 const AdminSettings = () => {
-  const { user } = useAuthContext();
+  const { user, refreshUser } = useAuthContext();
   const api = useApi();
   const [profile, setProfile] = useState({
     name: user?.name || '',
@@ -21,6 +21,10 @@ const AdminSettings = () => {
   const [xpRules, setXpRules] = useState({ submit: 20, correct: 10 });
   const [difficulties, setDifficulties] = useState(['beginner', 'intermediate', 'advanced']);
   const [saving, setSaving] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState({ type: '', text: '' });
+  const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
     const load = async () => {
@@ -38,19 +42,53 @@ const AdminSettings = () => {
     load();
   }, [api]);
 
-  const handleProfileSubmit = (e) => {
+  const handleProfileSubmit = async (e) => {
     e.preventDefault();
-    // TODO: PATCH `/api/admin/profile` with profile
+    setProfileSaving(true);
+    setProfileMessage({ type: '', text: '' });
+    try {
+      await api.patch('/admin/profile', profile);
+      setProfileMessage({ type: 'success', text: 'Profile updated successfully!' });
+      if (refreshUser) refreshUser();
+    } catch (err) {
+      setProfileMessage({ type: 'error', text: err.response?.data?.message || 'Failed to update profile.' });
+    } finally {
+      setProfileSaving(false);
+    }
   };
 
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    // TODO: POST `/api/admin/change-password` with passwords
+    setPasswordMessage({ type: '', text: '' });
+
+    if (passwords.next !== passwords.confirm) {
+      setPasswordMessage({ type: 'error', text: 'New passwords do not match.' });
+      return;
+    }
+
+    if (passwords.next.length < 8) {
+      setPasswordMessage({ type: 'error', text: 'New password must be at least 8 characters.' });
+      return;
+    }
+
+    setPasswordSaving(true);
+    try {
+      await api.post('/admin/change-password', {
+        currentPassword: passwords.current,
+        newPassword: passwords.next
+      });
+      setPasswordMessage({ type: 'success', text: 'Password changed successfully!' });
+      setPasswords({ current: '', next: '', confirm: '' });
+    } catch (err) {
+      setPasswordMessage({ type: 'error', text: err.response?.data?.message || 'Failed to change password.' });
+    } finally {
+      setPasswordSaving(false);
+    }
   };
 
   const handlePlatformSubmit = (e) => {
     e.preventDefault();
-    // optional brand patch
+    // optional brand patch - not implemented yet
   };
 
   const handleRulesSubmit = async (e) => {
@@ -98,12 +136,18 @@ const AdminSettings = () => {
             onChange={(e) => setProfile({ ...profile, email: e.target.value })}
           />
         </div>
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 space-y-2">
+          {profileMessage.text && (
+            <p className={`text-xs ${profileMessage.type === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>
+              {profileMessage.text}
+            </p>
+          )}
           <button
             type="submit"
-            className="rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-2 text-xs font-semibold text-white shadow-neon"
+            disabled={profileSaving}
+            className="rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-2 text-xs font-semibold text-white shadow-neon disabled:opacity-50"
           >
-            Save profile
+            {profileSaving ? 'Saving...' : 'Save profile'}
           </button>
         </div>
       </form>
@@ -143,12 +187,18 @@ const AdminSettings = () => {
             onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
           />
         </div>
-        <div className="md:col-span-3">
+        <div className="md:col-span-3 space-y-2">
+          {passwordMessage.text && (
+            <p className={`text-xs ${passwordMessage.type === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>
+              {passwordMessage.text}
+            </p>
+          )}
           <button
             type="submit"
-            className="rounded-xl border border-white/20 px-4 py-2 text-xs font-semibold text-slate-100 hover:bg-white/10"
+            disabled={passwordSaving}
+            className="rounded-xl border border-white/20 px-4 py-2 text-xs font-semibold text-slate-100 hover:bg-white/10 disabled:opacity-50"
           >
-            Update password
+            {passwordSaving ? 'Updating...' : 'Update password'}
           </button>
         </div>
       </form>

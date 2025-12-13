@@ -5,7 +5,7 @@ import Progress from '../models/Progress.js';
 import Enrollment from '../models/Enrollment.js';
 
 export const getLesson = async (req, res) => {
-  const lesson = await Lesson.findById(req.params.id).populate('quiz');
+  const lesson = await Lesson.findById(req.params.id).populate('quiz').populate('assignment');
   res.json(lesson);
 };
 

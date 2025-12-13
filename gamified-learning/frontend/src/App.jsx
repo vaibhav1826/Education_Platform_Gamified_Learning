@@ -1,4 +1,5 @@
 ﻿import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useAuthContext } from './context/AuthContext.jsx';
 import Navbar from './components/Navbar.jsx';
 import Hyperspeed from './components/Hyperspeed.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -11,6 +12,8 @@ import ChooseRole from './pages/ChooseRole.jsx';
 import StudentSignup from './pages/signup/StudentSignup.jsx';
 import TeacherSignup from './pages/signup/TeacherSignup.jsx';
 import AdminSignup from './pages/signup/AdminSignup.jsx';
+import CourseManager from './pages/CourseManager.jsx';
+import AssignmentGrading from './pages/teacher/AssignmentGrading.jsx';
 import StudentDashboard from './pages/StudentDashboard.jsx';
 import TeacherLayout from './components/teacher/TeacherLayout.jsx';
 import TeacherDashboard from './pages/teacher/TeacherDashboard.jsx';
@@ -40,6 +43,7 @@ import CourseList from './pages/CourseList.jsx';
 import CoursePage from './pages/CoursePage.jsx';
 import Lesson from './pages/Lesson.jsx';
 import QuizPage from './pages/QuizPage.jsx';
+import DiscussionDetail from './pages/DiscussionDetail.jsx';
 import Leaderboard from './pages/Leaderboard.jsx';
 import StudentBatches from './pages/StudentBatches.jsx';
 import StudentBatchDetails from './pages/StudentBatchDetails.jsx';
@@ -50,9 +54,14 @@ import StudentTestResult from './pages/StudentTestResult.jsx';
 import StudentLeaderboard from './pages/StudentLeaderboard.jsx';
 import StudentCourses from './pages/StudentCourses.jsx';
 import StudentProfile from './pages/StudentProfile.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
+import LandingPage from './pages/LandingPage.jsx';
+import NotFound from './pages/NotFound.jsx';
 
 const App = () => {
   const location = useLocation();
+  const { user, loading } = useAuthContext();
 
   // ❌ Hide Navbar on all admin pages
   const hideNavbar = location.pathname.startsWith("/admin");
@@ -86,6 +95,8 @@ const App = () => {
             <Route path="/signup/student" element={<StudentSignup />} />
             <Route path="/signup/teacher" element={<TeacherSignup />} />
             <Route path="/signup/admin" element={<AdminSignup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
 
             {/* Student Routes */}
             <Route
@@ -199,6 +210,8 @@ const App = () => {
               <Route path="quizzes/:quizId/submissions" element={<SubmissionsList />} />
               <Route path="submissions/:id" element={<SubmissionDetails />} />
               <Route path="leaderboard" element={<GlobalLeaderboard />} />
+              <Route path="course/:id/edit" element={<CourseManager />} />
+              <Route path="assignments/:assignmentId/grading" element={<AssignmentGrading />} />
             </Route>
 
             {/* Admin Routes (NO NAVBAR HERE) */}
@@ -263,6 +276,15 @@ const App = () => {
             />
 
             <Route
+              path="/discussions/:id"
+              element={
+                <ProtectedRoute>
+                  <DiscussionDetail />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/leaderboard"
               element={
                 <ProtectedRoute>
@@ -281,8 +303,21 @@ const App = () => {
             />
 
             {/* Default Routes */}
-            <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
+            <Route
+              path="/"
+              element={
+                loading ? null : user ? (
+                  <Navigate to={
+                    user.role === 'admin' ? '/admin/dashboard' :
+                      user.role === 'teacher' ? '/teacher/dashboard' :
+                        '/student/dashboard'
+                  } replace />
+                ) : (
+                  <LandingPage />
+                )
+              }
+            />
+            <Route path="*" element={<NotFound />} />
 
           </Routes>
         </div>

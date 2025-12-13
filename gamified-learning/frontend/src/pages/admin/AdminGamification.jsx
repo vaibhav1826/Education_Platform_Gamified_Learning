@@ -1,28 +1,83 @@
-// import axios from 'axios'; // TODO: connect to backend API
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import useApi from '../../hooks/useApi.js';
 
 const AdminGamification = () => {
+  const api = useApi();
   const [config, setConfig] = useState({
     xpPerLesson: 50,
     xpPerQuiz: 100,
     xpPerStreakDay: 20
   });
+  const [badges, setBadges] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load settings
+        const { data: settings } = await api.get('/admin/settings');
+        if (settings?.xpRules) {
+          setConfig({
+            xpPerLesson: settings.xpRules.find(r => r.action === 'lesson.complete')?.xp ?? 50,
+            xpPerQuiz: settings.xpRules.find(r => r.action === 'quiz.complete')?.xp ?? 100,
+            xpPerStreakDay: settings.xpRules.find(r => r.action === 'streak.day')?.xp ?? 20
+          });
+        }
+
+        // Load badges from auth seed or database
+        try {
+          const { data: badgeData } = await api.get('/admin/badges');
+          if (badgeData?.length) {
+            setBadges(badgeData.map(b => ({ ...b, active: true })));
+          }
+        } catch {
+          // Badges endpoint may not exist, use defaults
+          setBadges([
+            { _id: 1, name: '5 Day Streak', description: 'Keep learning 5 days in a row', active: true },
+            { _id: 2, name: 'Quiz Hero', description: 'Score full marks in a quiz', active: true },
+            { _id: 3, name: 'Early Bird', description: 'Complete a lesson before 8 AM', active: false }
+          ]);
+        }
+      } catch (err) {
+        console.error('Failed to load gamification settings', err);
+      }
+    };
+    loadData();
+  }, [api]);
 
   const handleChange = (field, value) => {
     setConfig((prev) => ({ ...prev, [field]: Number(value) || 0 }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    // TODO: POST/PATCH to `/api/admin/gamification` with config
-    // await axios.post('/api/admin/gamification', config);
+    setSaving(true);
+    setMessage({ type: '', text: '' });
+    try {
+      await api.patch('/admin/settings', {
+        xpRules: [
+          { action: 'lesson.complete', xp: config.xpPerLesson },
+          { action: 'quiz.complete', xp: config.xpPerQuiz },
+          { action: 'streak.day', xp: config.xpPerStreakDay },
+          { action: 'quiz.submit', xp: 20 },
+          { action: 'quiz.correct', xp: 10 }
+        ]
+      });
+      setMessage({ type: 'success', text: 'Configuration saved successfully!' });
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to save configuration.' });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const badges = [
-    { id: 1, name: '5 Day Streak', description: 'Keep learning 5 days in a row', active: true },
-    { id: 2, name: 'Quiz Hero', description: 'Score full marks in a quiz', active: true },
-    { id: 3, name: 'Early Bird', description: 'Complete a lesson before 8 AM', active: false }
-  ];
+  const toggleBadge = (badgeId) => {
+    setBadges(prev => prev.map(b =>
+      b._id === badgeId ? { ...b, active: !b.active } : b
+    ));
+    // Note: Badge toggle would need a backend endpoint to persist
+  };
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -64,12 +119,18 @@ const AdminGamification = () => {
             onChange={(e) => handleChange('xpPerStreakDay', e.target.value)}
           />
         </div>
-        <div className="md:col-span-3">
+        <div className="md:col-span-3 space-y-2">
+          {message.text && (
+            <p className={`text-xs ${message.type === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>
+              {message.text}
+            </p>
+          )}
           <button
             type="submit"
-            className="rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-2 text-xs font-semibold text-white shadow-neon"
+            disabled={saving}
+            className="rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-2 text-xs font-semibold text-white shadow-neon disabled:opacity-50"
           >
-            Save configuration
+            {saving ? 'Saving...' : 'Save configuration'}
           </button>
         </div>
       </form>
@@ -77,12 +138,12 @@ const AdminGamification = () => {
       <section className="rounded-2xl border border-white/10 bg-black/40 p-5">
         <h2 className="text-sm font-semibold text-white">Badges</h2>
         <p className="mb-3 text-xs text-slate-400">
-          Toggle which badges are currently active. Editing criteria can be wired to a backend later.
+          Toggle which badges are currently active. Badge state is managed locally for now.
         </p>
         <div className="space-y-2">
           {badges.map((badge) => (
             <div
-              key={badge.id}
+              key={badge._id}
               className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm"
             >
               <div>
@@ -91,12 +152,11 @@ const AdminGamification = () => {
               </div>
               <button
                 type="button"
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                  badge.active
+                onClick={() => toggleBadge(badge._id)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${badge.active
                     ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/60'
                     : 'bg-slate-700/40 text-slate-200 border border-slate-500/60'
-                }`}
-                // TODO: toggle badge active state via API
+                  }`}
               >
                 {badge.active ? 'Active' : 'Inactive'}
               </button>
@@ -109,5 +169,3 @@ const AdminGamification = () => {
 };
 
 export default AdminGamification;
-
-

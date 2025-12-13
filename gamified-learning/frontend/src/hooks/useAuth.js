@@ -9,14 +9,25 @@ const api = axios.create({
 const useAuth = () => {
   const initAuth = useCallback(async () => {
     try {
+      // 1. Try existing token
       const token = localStorage.getItem('accessToken');
-      if (!token) return null;
-      const { data } = await api.get('/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return { user: data, token };
+      if (token) {
+        try {
+          const { data } = await api.get('/auth/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          return { user: data, token };
+        } catch (err) {
+          // If token invalid, fall through to refresh
+          localStorage.removeItem('accessToken');
+        }
+      }
+
+      // 2. Try refresh
+      const { data } = await api.post('/auth/refresh');
+      localStorage.setItem('accessToken', data.accessToken);
+      return { user: data.user, token: data.accessToken };
     } catch {
-      localStorage.removeItem('accessToken');
       return null;
     }
   }, []);

@@ -32,6 +32,15 @@ router.post('/profile', protect, upload.single('image'), (req, res) => {
   res.status(201).json({ url });
 });
 
+// Accepts multipart/form-data with field "file" and returns a URL
+router.post('/file', protect, upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+  const url = `/uploads/profile/${req.file.filename}`; // Storing in same dir for simplicity or change logic above
+  res.status(201).json({ url });
+});
+
 export default router;
 
 

@@ -14,8 +14,9 @@ const lessonSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     content: String,
-    contentType: { type: String, enum: ['video', 'article', 'interactive'], default: 'article' },
+    contentType: { type: String, enum: ['video', 'article', 'interactive', 'assignment'], default: 'article' },
     quiz: { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz' },
+    assignment: { type: mongoose.Schema.Types.ObjectId, ref: 'Assignment' },
     module: { type: mongoose.Schema.Types.ObjectId, ref: 'Module' },
     attachments: [attachmentSchema],
     order: { type: Number, default: 0 },

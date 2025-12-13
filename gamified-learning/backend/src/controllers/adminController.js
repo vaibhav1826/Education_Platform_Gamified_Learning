@@ -262,3 +262,54 @@ export const updateSettings = async (req, res) => {
   res.json(settings);
 };
 
+// -------- Admin Own Profile ----------
+export const updateAdminOwnProfile = async (req, res) => {
+  const { name, email } = req.body;
+
+  if (email) {
+    // Check if email is already taken by another user
+    const existing = await User.findOne({ email: email.toLowerCase().trim(), _id: { $ne: req.user._id } });
+    if (existing) {
+      return res.status(409).json({ message: 'Email already in use by another account.' });
+    }
+  }
+
+  const updates = {};
+  if (name) updates.name = name.trim();
+  if (email) updates.email = email.toLowerCase().trim();
+
+  const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true });
+  res.json(user.safeObject());
+};
+
+export const changeAdminPassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: 'Current password and new password are required.' });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({ message: 'New password must be at least 8 characters.' });
+  }
+
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return res.status(404).json({ message: 'User not found.' });
+  }
+
+  if (user.authProvider === 'google') {
+    return res.status(400).json({ message: 'Cannot change password for Google OAuth account.' });
+  }
+
+  const isMatch = await user.matchPassword(currentPassword);
+  if (!isMatch) {
+    return res.status(401).json({ message: 'Current password is incorrect.' });
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  res.json({ message: 'Password changed successfully.' });
+};
+
