@@ -6,7 +6,7 @@ const useNotifications = () => {
   const [notifications, setNotifications] = useState([]);
 
   const fetchNotifications = useCallback(async () => {
-    const { data } = await api.get('/student/notifications');
+    const { data } = await api.get('/notifications');
     setNotifications(data);
   }, [api]);
 
