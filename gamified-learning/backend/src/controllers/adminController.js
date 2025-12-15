@@ -8,7 +8,67 @@ import Notification from '../models/Notification.js';
 import Settings from '../models/Settings.js';
 import { emitToUser, emitToRole, emitToAll, emitToBatch } from '../utils/socket.js';
 
-// -------- Users ----------
+// Admin Controller
+// This is the "God Mode" of our platform. 
+// Admins can see everyone, change statuses, and manage the system settings.
+// Powerful stuff, so we keep it secure!
+
+// -------- Admin Analytics Dashboard ----------
+// Aggregates platform-wide metrics for the admin reports page
+export const getAdminAnalytics = async (_req, res) => {
+  const now = new Date();
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  // Get counts for this week
+  const [
+    newUsersThisWeek,
+    totalUsers,
+    totalStudents,
+    totalTeachers,
+    totalAdmins,
+    quizAttemptsThisWeek,
+    enrollmentsThisWeek,
+    topCourses
+  ] = await Promise.all([
+    User.countDocuments({ createdAt: { $gte: oneWeekAgo } }),
+    User.countDocuments(),
+    User.countDocuments({ role: 'student' }),
+    User.countDocuments({ role: 'teacher' }),
+    User.countDocuments({ role: 'admin' }),
+    Submission.countDocuments({ createdAt: { $gte: oneWeekAgo } }),
+    Course.aggregate([
+      { $match: { createdAt: { $gte: oneWeekAgo } } },
+      { $group: { _id: null, count: { $sum: '$enrollmentCount' } } }
+    ]).then(r => r[0]?.count || 0),
+    Course.find()
+      .sort({ enrollmentCount: -1 })
+      .limit(5)
+      .select('title enrollmentCount')
+      .then(courses => courses.map(c => ({ name: c.title, enrollments: c.enrollmentCount || 0 })))
+  ]);
+
+  // User distribution for pie chart
+  const userDistribution = [
+    { name: 'Students', value: totalStudents, color: '#8b5cf6' },
+    { name: 'Teachers', value: totalTeachers, color: '#06b6d4' },
+    { name: 'Admins', value: totalAdmins, color: '#f43f5e' }
+  ];
+
+  res.json({
+    newUsersThisWeek,
+    quizAttemptsThisWeek,
+    enrollmentsThisWeek,
+    totalUsers,
+    topCourses,
+    userDistribution
+  });
+};
+// Admins can see everyone, change statuses, and manage the system settings.
+// Powerful stuff, so we keep it secure!
+
+// -------- Users Management ----------
+// Here admins can list all teachers/students and intervene if needed
+// (like banning a user or fixing a typo in their name).
 export const listTeachers = async (_req, res) => {
   const teachers = await User.find({ role: 'teacher' }).select('-password -refreshToken');
   res.json(teachers);
@@ -42,7 +102,9 @@ export const updateUserProfile = async (req, res) => {
   res.json(user.safeObject());
 };
 
-// -------- Batches & Courses ----------
+// -------- Content Management ----------
+// Admin oversight for Batches and Courses.
+// Useful for ensuring quality control or removing spam.
 export const listBatches = async (_req, res) => {
   const batches = await Batch.find().populate('teacher', 'name email').populate('students', 'name email');
   res.json(batches);
@@ -91,7 +153,8 @@ export const updateCourseStatus = async (req, res) => {
   res.json(course);
 };
 
-// -------- Quizzes & Submissions ----------
+// -------- Quality Assurance ----------
+// Moderating Quizzes and viewing Submissions across the platform.
 export const listQuizzes = async (_req, res) => {
   const quizzes = await Quiz.find().populate('createdBy', 'name email');
   res.json(quizzes);
@@ -140,7 +203,8 @@ export const listSubmissions = async (_req, res) => {
   res.json(submissions);
 };
 
-// -------- Student monitoring ----------
+// -------- Student Monitoring ----------
+// Deep dive into a specific student's performance.
 export const getStudentStats = async (req, res) => {
   const student = await User.findById(req.params.id).select('name xp level streak badges');
   if (!student) return res.status(404).json({ message: 'Student not found' });
@@ -160,7 +224,8 @@ export const getStudentBatches = async (req, res) => {
   res.json(batches);
 };
 
-// -------- Announcements & notifications ----------
+// -------- Communications ----------
+// Sending blasts to all students, teachers, or specific groups.
 export const createAdminAnnouncement = async (req, res) => {
   const { title, message, target } = req.body;
   const announcement = await Announcement.create({
@@ -196,6 +261,7 @@ export const createAdminNotifications = async (req, res) => {
 };
 
 // -------- Leaderboards ----------
+// Global rankings to see who the top performers are.
 export const getAdminStudentLeaderboard = async (_req, res) => {
   const submissions = await Submission.aggregate([
     {
@@ -208,13 +274,20 @@ export const getAdminStudentLeaderboard = async (_req, res) => {
     { $sort: { totalScore: -1 } },
     { $limit: 100 }
   ]);
-  const users = await User.find({ _id: { $in: submissions.map((s) => s._id) } }).select('name xp level');
-  const leaderboard = submissions.map((s, idx) => ({
-    rank: idx + 1,
-    student: users.find((u) => u._id.toString() === s._id.toString()),
-    totalScore: s.totalScore,
-    attempts: s.attempts
-  }));
+
+
+  // Filter for ONLY students
+  const users = await User.find({ _id: { $in: submissions.map((s) => s._id) }, role: 'student' }).select('name xp level');
+  const studentIds = new Set(users.map(u => u._id.toString()));
+
+  const leaderboard = submissions
+    .filter(s => studentIds.has(s._id.toString()))
+    .map((s, idx) => ({
+      rank: idx + 1,
+      student: users.find((u) => u._id.toString() === s._id.toString()),
+      totalScore: s.totalScore,
+      attempts: s.attempts
+    }));
   res.json(leaderboard);
 };
 
@@ -249,7 +322,8 @@ export const getAdminTeacherLeaderboard = async (_req, res) => {
   res.json(leaderboard);
 };
 
-// -------- Settings ----------
+// -------- Platform Settings ----------
+// Global configuration like site name, themes, or feature flags.
 export const getSettings = async (_req, res) => {
   const settings = await Settings.getSingleton();
   res.json(settings);

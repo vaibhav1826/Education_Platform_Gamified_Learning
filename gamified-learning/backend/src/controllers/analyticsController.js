@@ -5,6 +5,12 @@ import Progress from '../models/Progress.js';
 import QuizAttempt from '../models/QuizAttempt.js';
 import Announcement from '../models/Announcement.js';
 
+// Analytics Controller
+// The brain for data visualization.
+// Aggregates simple stats for Teacher and Student dashboards so they don't have to crunch numbers themselves.
+
+// Teacher Overlay
+// "How are my courses doing?" - Enrollments, average progress, recent quiz attempts.
 export const getTeacherOverview = async (req, res) => {
   const courses = await Course.find({ teacher: req.user._id }).select('title enrollmentCount createdAt');
   const courseIds = courses.map((course) => course._id);
@@ -37,6 +43,8 @@ export const getTeacherOverview = async (req, res) => {
   res.json({ courses, stats, recentAttempts });
 };
 
+// Student Overlay
+// "How am I doing?" - My courses, my latest grades, and what's new.
 export const getStudentOverview = async (req, res) => {
   const enrollments = await Enrollment.find({ student: req.user._id }).populate('course', 'title thumbnail category teacher');
   const courseIds = enrollments.map((enrollment) => enrollment.course?._id).filter(Boolean);

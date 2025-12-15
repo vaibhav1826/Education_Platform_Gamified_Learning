@@ -25,12 +25,16 @@ import {
   getSettings,
   updateSettings,
   updateAdminOwnProfile,
-  changeAdminPassword
+  changeAdminPassword,
+  getAdminAnalytics
 } from '../controllers/adminController.js';
 
 const router = Router();
 
 router.use(protect, authorize('admin'));
+
+// Analytics Dashboard
+router.get('/analytics', getAdminAnalytics);
 
 // Admin own profile
 router.patch('/profile', updateAdminOwnProfile);

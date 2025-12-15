@@ -1,5 +1,9 @@
 import mongoose from 'mongoose';
 
+// Enrollment Model
+// Links a Student to a Course.
+// Tracks generally if they are "active", "completed", or "dropped".
+
 const enrollmentSchema = new mongoose.Schema(
   {
     course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },

@@ -1,12 +1,12 @@
 ﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GoogleLogin } from '@react-oauth/google';
+
 import { useAuthContext } from '../context/AuthContext.jsx';
 
 const Signup = () => {
   const navigate = useNavigate();
-  const { signup, loginWithGoogle } = useAuthContext();
+  const { signup } = useAuthContext();
   const [role, setRole] = useState('student');
   const [form, setForm] = useState({
     name: '',
@@ -37,17 +37,7 @@ const Signup = () => {
     }
   };
 
-  const handleGoogleSuccess = async (response) => {
-    try {
-      const data = await loginWithGoogle({ credential: response.credential, role });
-      const userRole = data?.user?.role;
-      if (userRole === 'teacher') navigate('/teacher');
-      else if (userRole === 'admin') navigate('/admin');
-      else navigate('/');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Google signup failed');
-    }
-  };
+
 
   return (
     <div className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 overflow-hidden">
@@ -152,11 +142,10 @@ const Signup = () => {
                     key={r}
                     type="button"
                     onClick={() => setRole(r)}
-                    className={`rounded-xl border px-4 py-3 text-sm font-semibold capitalize transition ${
-                      role === r
+                    className={`rounded-xl border px-4 py-3 text-sm font-semibold capitalize transition ${role === r
                         ? 'border-pink-500/70 bg-pink-500/10 text-white'
                         : 'border-white/10 bg-black/30 text-slate-400'
-                    }`}
+                      }`}
                   >
                     {r}
                   </button>
@@ -211,15 +200,7 @@ const Signup = () => {
               {isLoading ? 'Creating Account...' : 'Create account'}
             </motion.button>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9 }}
-              className="flex flex-col items-center gap-3 text-sm text-slate-400"
-            >
-              <span>or continue with</span>
-              <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setError('Google signup failed')} />
-            </motion.div>
+
           </form>
         </motion.div>
       </div>

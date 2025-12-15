@@ -44,11 +44,7 @@ const useAuth = () => {
     return { user: data.user, token: data.accessToken };
   }, []);
 
-  const loginWithGoogle = useCallback(async ({ credential, role }) => {
-    const { data } = await api.post('/auth/google', { credential, role });
-    localStorage.setItem('accessToken', data.accessToken);
-    return { user: data.user, token: data.accessToken };
-  }, []);
+
 
   const logout = useCallback(async () => {
     try {
@@ -59,7 +55,7 @@ const useAuth = () => {
     }
   }, []);
 
-  return { initAuth, login, signup, loginWithGoogle, logout };
+  return { initAuth, login, signup, logout };
 };
 
 export default useAuth;

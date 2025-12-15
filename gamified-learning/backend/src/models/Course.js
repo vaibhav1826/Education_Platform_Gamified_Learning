@@ -10,6 +10,10 @@ const resourceSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Course Model
+// The top-level container for learning content.
+// Think of it like a subject book: "Math 101" or "Advanced React".
+
 const courseSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },

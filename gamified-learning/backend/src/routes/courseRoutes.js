@@ -6,6 +6,8 @@ import {
   updateCourse,
   deleteCourse,
   createModule,
+  updateModule,
+  deleteModule,
   createLesson,
   enrollInCourse,
   getCourseRoster,
@@ -33,6 +35,9 @@ router.get('/:id/announcements', protect, getCourseAnnouncements);
 router.post('/:id/announcements', protect, authorize('teacher', 'admin'), postAnnouncement);
 
 router.post('/:id/modules', protect, authorize('teacher', 'admin'), createModule);
+router.route('/modules/:moduleId')
+  .put(protect, authorize('teacher', 'admin'), updateModule)
+  .delete(protect, authorize('teacher', 'admin'), deleteModule);
 router.post('/modules/:moduleId/lessons', protect, authorize('teacher', 'admin'), createLesson);
 
 export default router;

@@ -7,6 +7,10 @@ const questionSchema = new mongoose.Schema({
   points: { type: Number, default: 1 }
 });
 
+// Quiz Model
+// Defines a set of questions, potential time limits, and scheduling.
+// Can be "Global" (for everyone) or "Private" (for specific batches).
+
 const quizSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },

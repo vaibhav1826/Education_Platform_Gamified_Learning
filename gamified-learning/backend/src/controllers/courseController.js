@@ -9,6 +9,11 @@ import Progress from '../models/Progress.js';
 import QuizAttempt from '../models/QuizAttempt.js';
 import { io } from '../utils/socket.js';
 
+// Course Controller
+// Manages logic for Courses, Modules, Lessons, and Enrollments.
+
+// Helper: Standard Population config to avoid repetition
+// We always want to know who the teacher is, and see the full module->lesson hierarchy.
 const coursePopulateConfig = [
   { path: 'teacher', select: 'name avatar role email' },
   {
@@ -22,6 +27,7 @@ const coursePopulateConfig = [
   }
 ];
 
+// Security Helper: Ensures that only the course creator (teacher) can modify content blocks.
 const ensureTeacherAccess = async (courseId, userId) => {
   const course = await Course.findById(courseId);
   if (!course) return null;
@@ -41,11 +47,19 @@ const withEnrollmentStatus = (courses, enrollmentMap) =>
     return courseObj;
   });
 
+/**
+ * GET All Courses
+ * Supports filtering for "My Courses" (for teachers) or specific Teacher Profiles.
+ * For Students, it also augments the response with their Enrollment status and Progress.
+ */
 export const getCourses = async (req, res) => {
   const filter = {};
+
+  // Teacher View: "My Created Courses"
   if (req.query.mine === 'true' && req.user.role === 'teacher') {
     filter.teacher = req.user._id;
   }
+  // Public View: Filter by specific teacher ID
   if (req.query.teacherId && mongoose.Types.ObjectId.isValid(req.query.teacherId)) {
     filter.teacher = req.query.teacherId;
   }
@@ -54,10 +68,13 @@ export const getCourses = async (req, res) => {
     .sort({ createdAt: -1 })
     .populate(coursePopulateConfig);
 
+  // If user is teacher/admin, just return the raw course data
   if (req.user.role !== 'student') {
     return res.json(courses);
   }
 
+  // Student Experience: We need to know "Am I enrolled?" and "What's my progress?"
+  // We fetch enrollments separately to build a map, then merge it into the course objects.
   const enrollments = await Enrollment.find({ student: req.user._id }).select('course progressPct');
   const enrollmentMap = new Map(enrollments.map((enrollment) => [String(enrollment.course), enrollment]));
   res.json(withEnrollmentStatus(courses, enrollmentMap));
@@ -111,6 +128,44 @@ export const createLesson = async (req, res) => {
   const lesson = await Lesson.create({ ...req.body, module: moduleId });
   await ModuleModel.findByIdAndUpdate(moduleId, { $push: { lessons: lesson._id } });
   res.status(201).json(lesson);
+};
+
+export const updateModule = async (req, res) => {
+  const module = await ModuleModel.findById(req.params.moduleId);
+  if (!module) return res.status(404).json({ message: 'Module not found' });
+  await ensureTeacherAccess(module.course, req.user._id);
+
+  const { title, description, order } = req.body;
+  const updates = {
+    ...(title && { title: title.trim() }),
+    ...(description !== undefined && { description: description.trim() || undefined }),
+    ...(order !== undefined && { order: Number(order) })
+  };
+
+  const updated = await ModuleModel.findByIdAndUpdate(req.params.moduleId, updates, { new: true })
+    .populate({ path: 'lessons', options: { sort: { order: 1 } } });
+  res.json(updated);
+};
+
+export const deleteModule = async (req, res) => {
+  const module = await ModuleModel.findById(req.params.moduleId);
+  if (!module) return res.status(404).json({ message: 'Module not found' });
+  await ensureTeacherAccess(module.course, req.user._id);
+
+  // Delete all lessons in this module
+  await Lesson.deleteMany({ module: module._id });
+
+  // Remove module reference from parent course
+  await Course.findByIdAndUpdate(module.course, { $pull: { modules: module._id } });
+
+  // Clean up progress entries
+  await Progress.updateMany(
+    {},
+    { $pull: { lessons: { lesson: { $in: module.lessons } } } }
+  );
+
+  await ModuleModel.findByIdAndDelete(req.params.moduleId);
+  res.json({ message: 'Module deleted' });
 };
 
 export const enrollInCourse = async (req, res) => {
@@ -202,6 +257,9 @@ export const postAnnouncement = async (req, res) => {
   });
   await announcement.populate('author', 'name avatar role');
 
+  // Real-time Notification System
+  // 1. Create persistent notifications in DB for valid history
+  // 2. Emit socket events to connected clients for instant UI updates
   const enrollments = await Enrollment.find({ course: course._id }).select('student');
   const notificationsPayload = enrollments.map((enrollment) => ({
     user: enrollment.student,
@@ -210,12 +268,17 @@ export const postAnnouncement = async (req, res) => {
     message: body,
     meta: { courseId: course._id, announcementId: announcement._id }
   }));
+
   if (notificationsPayload.length) {
     await Notification.insertMany(notificationsPayload);
     const socketServer = io();
+
+    // Notify individual students
     notificationsPayload.forEach((notification) => {
       socketServer?.to(`user:${notification.user}`).emit('announcement:new', notification);
     });
+
+    // Broadcast to the course room (if clients are listening there)
     socketServer?.to(`course:${course._id}`).emit('announcement:new', announcement);
   }
 

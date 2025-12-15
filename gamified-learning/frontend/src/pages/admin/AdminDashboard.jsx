@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import useApi from '../../hooks/useApi.js';
 import { useSocket } from '../../context/SocketContext.jsx';
@@ -148,7 +149,7 @@ const AdminDashboard = () => {
 
       {/* Recent Activity + Quick Actions */}
       <section className="grid gap-4 lg:grid-cols-[2fr_1.3fr]">
-        
+
         {/* RECENT ACTIVITY */}
         <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-glass-card">
           <h2 className="text-sm font-semibold text-white">Recent activity</h2>
@@ -192,9 +193,9 @@ const AdminDashboard = () => {
               <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
                 <p className="text-xs font-semibold text-amber-300">{pendingCourses} courses pending</p>
                 <p className="mt-1 text-[11px] text-slate-300">Review and approve courses</p>
-                <a href="/admin/courses" className="mt-2 inline-block text-xs text-primary underline">
+                <Link to="/admin/courses" className="mt-2 inline-block text-xs text-primary underline">
                   Go to courses →
-                </a>
+                </Link>
               </div>
             )}
 
@@ -202,9 +203,9 @@ const AdminDashboard = () => {
               <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
                 <p className="text-xs font-semibold text-amber-300">{pendingQuizzes} quizzes pending</p>
                 <p className="mt-1 text-[11px] text-slate-300">Review and approve quizzes</p>
-                <a href="/admin/quizzes" className="mt-2 inline-block text-xs text-primary underline">
+                <Link to="/admin/quizzes" className="mt-2 inline-block text-xs text-primary underline">
                   Go to quizzes →
-                </a>
+                </Link>
               </div>
             )}
 
@@ -216,15 +217,15 @@ const AdminDashboard = () => {
             )}
 
             <div className="mt-4 space-y-2 text-xs text-slate-300">
-              <a href="/admin/users" className="block rounded-lg border border-white/10 bg-black/40 px-3 py-2 hover:bg-white/5">
+              <Link to="/admin/users" className="block rounded-lg border border-white/10 bg-black/40 px-3 py-2 hover:bg-white/5">
                 Manage Users
-              </a>
-              <a href="/admin/batches" className="block rounded-lg border border-white/10 bg-black/40 px-3 py-2 hover:bg-white/5">
+              </Link>
+              <Link to="/admin/batches" className="block rounded-lg border border-white/10 bg-black/40 px-3 py-2 hover:bg-white/5">
                 View Batches
-              </a>
-              <a href="/admin/settings" className="block rounded-lg border border-white/10 bg-black/40 px-3 py-2 hover:bg-white/5">
+              </Link>
+              <Link to="/admin/settings" className="block rounded-lg border border-white/10 bg-black/40 px-3 py-2 hover:bg-white/5">
                 Platform Settings
-              </a>
+              </Link>
             </div>
           </div>
         </div>

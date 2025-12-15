@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { GraduationCap, Users, Shield } from 'lucide-react';
 
@@ -95,9 +95,9 @@ const LoginRoleSelect = () => {
             className="mt-8 text-center text-sm text-slate-400"
           >
             Don't have an account?{' '}
-            <a href="/choose-role" className="font-semibold text-primary hover:text-accent transition">
+            <Link to="/choose-role" className="font-semibold text-primary hover:text-accent transition">
               Sign up
-            </a>
+            </Link>
           </motion.p>
         </motion.div>
       </div>

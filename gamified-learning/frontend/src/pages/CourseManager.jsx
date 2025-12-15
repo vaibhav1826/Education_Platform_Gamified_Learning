@@ -17,6 +17,7 @@ const CourseManager = () => {
     const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
 
     const [activeModuleId, setActiveModuleId] = useState(null);
+    const [editingLesson, setEditingLesson] = useState(null);
 
     // Forms
     const [moduleForm, setModuleForm] = useState({ title: '', description: '' });
@@ -98,6 +99,43 @@ const CourseManager = () => {
             console.error(error);
             setStatus('Error creating lesson');
         }
+    };
+
+    const handleEditLesson = async (e) => {
+        e.preventDefault();
+        if (!editingLesson) return;
+        setStatus('Updating lesson...');
+        try {
+            await api.patch(`/lessons/${editingLesson._id}`, {
+                title: lessonForm.title,
+                content: lessonForm.type === 'video' ? lessonForm.videoUrl : lessonForm.content,
+                contentType: lessonForm.type,
+                durationMinutes: Number(lessonForm.duration)
+            });
+            setEditingLesson(null);
+            setLessonForm({ title: '', type: 'article', content: '', videoUrl: '', duration: 5 });
+            setStatus('Lesson updated!');
+            fetchCourse();
+        } catch (error) {
+            console.error(error);
+            setStatus('Error updating lesson');
+        }
+    };
+
+    const openEditLessonModal = (lesson) => {
+        setEditingLesson(lesson);
+        setLessonForm({
+            title: lesson.title,
+            type: lesson.contentType || 'article',
+            content: lesson.contentType === 'video' ? '' : lesson.content,
+            videoUrl: lesson.contentType === 'video' ? lesson.content : '',
+            duration: lesson.durationMinutes || 5
+        });
+    };
+
+    const closeEditModal = () => {
+        setEditingLesson(null);
+        setLessonForm({ title: '', type: 'article', content: '', videoUrl: '', duration: 5 });
     };
 
     if (loading) return <div className="p-8 text-center text-slate-400">Loading course data...</div>;
@@ -183,12 +221,21 @@ const CourseManager = () => {
                                             >
                                                 <div className="p-2 space-y-1">
                                                     {module.lessons?.map((lesson, lIndex) => (
-                                                        <div key={lesson._id} className="flex items-center gap-3 rounded-xl p-3 hover:bg-white/5">
+                                                        <div key={lesson._id} className="flex items-center gap-3 rounded-xl p-3 hover:bg-white/5 group">
                                                             <div className="text-slate-500">
                                                                 {lesson.contentType === 'video' ? <Video size={16} /> : <FileText size={16} />}
                                                             </div>
                                                             <span className="flex-1 text-sm text-slate-300">{lesson.title}</span>
                                                             <span className="text-xs text-slate-600">{lesson.durationMinutes} min</span>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    openEditLessonModal(lesson);
+                                                                }}
+                                                                className="opacity-0 group-hover:opacity-100 px-2 py-1 rounded-lg bg-white/10 text-xs text-slate-400 hover:text-white hover:bg-white/20 transition-all"
+                                                            >
+                                                                Edit
+                                                            </button>
                                                         </div>
                                                     ))}
 
@@ -323,77 +370,155 @@ const CourseManager = () => {
                                 />
                                 <span className="absolute right-3 top-3 text-xs text-slate-500">mins</span>
                             </div>
-                        </div>
 
-                        {lessonForm.type === 'video' && (
-                            <input
-                                required
-                                placeholder="Video URL (YouTube, Vimeo, etc.)"
-                                className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm transition-colors focus:border-primary focus:outline-none"
-                                value={lessonForm.videoUrl}
-                                onChange={e => setLessonForm({ ...lessonForm, videoUrl: e.target.value })}
-                            />
-                        )}
 
-                        {lessonForm.type === 'article' && (
-                            <textarea
-                                required
-                                placeholder="Lesson content goes here..."
-                                className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm transition-colors focus:border-primary focus:outline-none"
-                                rows={6}
-                                value={lessonForm.content}
-                                onChange={e => setLessonForm({ ...lessonForm, content: e.target.value })}
-                            />
-                        )}
+                            {lessonForm.type === 'video' && (
+                                <input
+                                    required
+                                    placeholder="Video URL (YouTube, Vimeo, etc.)"
+                                    className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm transition-colors focus:border-primary focus:outline-none"
+                                    value={lessonForm.videoUrl}
+                                    onChange={e => setLessonForm({ ...lessonForm, videoUrl: e.target.value })}
+                                />
+                            )}
 
-                        {lessonForm.type === 'assignment' && (
-                            <div className="space-y-3">
+                            {lessonForm.type === 'article' && (
                                 <textarea
                                     required
-                                    placeholder="Assignment Instructions..."
+                                    placeholder="Lesson content goes here..."
                                     className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm transition-colors focus:border-primary focus:outline-none"
-                                    rows={4}
+                                    rows={6}
                                     value={lessonForm.content}
                                     onChange={e => setLessonForm({ ...lessonForm, content: e.target.value })}
                                 />
-                                <div className="grid grid-cols-2 gap-3">
-                                    <input
-                                        type="number"
-                                        placeholder="Points (e.g. 100)"
-                                        className="rounded-xl border border-white/10 bg-black/40 p-3 text-sm focus:border-primary focus:outline-none"
-                                        value={lessonForm.points || ''}
-                                        onChange={e => setLessonForm({ ...lessonForm, points: e.target.value })}
-                                    />
-                                    <input
-                                        type="date"
-                                        className="rounded-xl border border-white/10 bg-black/40 p-3 text-sm text-slate-400 focus:border-primary focus:outline-none"
-                                        value={lessonForm.dueDate || ''}
-                                        onChange={e => setLessonForm({ ...lessonForm, dueDate: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                        )}
+                            )}
 
-                        <div className="flex gap-3 pt-2">
-                            <button
-                                type="button"
-                                onClick={() => setIsLessonModalOpen(false)}
-                                className="flex-1 rounded-xl bg-white/5 py-3 text-sm font-semibold hover:bg-white/10"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-white hover:bg-primary/90"
-                            >
-                                Save Lesson
-                            </button>
-                        </div>
-                    </form>
-                </motion.div>
+                            {lessonForm.type === 'assignment' && (
+                                <div className="space-y-3">
+                                    <textarea
+                                        required
+                                        placeholder="Assignment Instructions..."
+                                        className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm transition-colors focus:border-primary focus:outline-none"
+                                        rows={4}
+                                        value={lessonForm.content}
+                                        onChange={e => setLessonForm({ ...lessonForm, content: e.target.value })}
+                                    />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <input
+                                            type="number"
+                                            placeholder="Points (e.g. 100)"
+                                            className="rounded-xl border border-white/10 bg-black/40 p-3 text-sm focus:border-primary focus:outline-none"
+                                            value={lessonForm.points || ''}
+                                            onChange={e => setLessonForm({ ...lessonForm, points: e.target.value })}
+                                        />
+                                        <input
+                                            type="date"
+                                            className="rounded-xl border border-white/10 bg-black/40 p-3 text-sm text-slate-400 focus:border-primary focus:outline-none"
+                                            value={lessonForm.dueDate || ''}
+                                            onChange={e => setLessonForm({ ...lessonForm, dueDate: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsLessonModalOpen(false)}
+                                    className="flex-1 rounded-xl bg-white/5 py-3 text-sm font-semibold hover:bg-white/10"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-white hover:bg-primary/90"
+                                >
+                                    Save Lesson
+                                </button>
+                            </div>
+                        </form>
+                    </motion.div>
                 </div>
-    )
-}
+            )
+            }
+
+            {/* Edit Lesson Modal */}
+            {editingLesson && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm">
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#0f1014] p-6 shadow-2xl"
+                    >
+                        <h3 className="mb-4 text-xl font-bold">Edit Lesson</h3>
+                        <form onSubmit={handleEditLesson} className="space-y-4">
+                            <input
+                                required
+                                placeholder="Lesson Title"
+                                className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm transition-colors focus:border-primary focus:outline-none"
+                                value={lessonForm.title}
+                                onChange={e => setLessonForm({ ...lessonForm, title: e.target.value })}
+                            />
+
+                            <select
+                                className="rounded-xl border border-white/10 bg-black/40 p-3 text-sm focus:border-primary focus:outline-none"
+                                value={lessonForm.type}
+                                onChange={e => setLessonForm({ ...lessonForm, type: e.target.value })}
+                            >
+                                <option value="article">Article / Text</option>
+                                <option value="video">Video</option>
+                            </select>
+
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm focus:border-primary focus:outline-none"
+                                    value={lessonForm.duration}
+                                    onChange={e => setLessonForm({ ...lessonForm, duration: e.target.value })}
+                                />
+                                <span className="absolute right-3 top-3 text-xs text-slate-500">mins</span>
+                            </div>
+
+                            {lessonForm.type === 'video' && (
+                                <input
+                                    required
+                                    placeholder="Video URL (YouTube, Vimeo, etc.)"
+                                    className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm transition-colors focus:border-primary focus:outline-none"
+                                    value={lessonForm.videoUrl}
+                                    onChange={e => setLessonForm({ ...lessonForm, videoUrl: e.target.value })}
+                                />
+                            )}
+
+                            {lessonForm.type === 'article' && (
+                                <textarea
+                                    required
+                                    placeholder="Lesson content goes here..."
+                                    className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm transition-colors focus:border-primary focus:outline-none"
+                                    rows={6}
+                                    value={lessonForm.content}
+                                    onChange={e => setLessonForm({ ...lessonForm, content: e.target.value })}
+                                />
+                            )}
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={closeEditModal}
+                                    className="flex-1 rounded-xl bg-white/5 py-3 text-sm font-semibold hover:bg-white/10"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+                                >
+                                    Update Lesson
+                                </button>
+                            </div>
+                        </form>
+                    </motion.div>
+                </div>
+            )}
         </div >
     );
 };

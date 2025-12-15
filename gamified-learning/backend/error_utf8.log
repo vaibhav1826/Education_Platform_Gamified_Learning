@@ -1,0 +1,55 @@
+﻿node : file:///F:/rea
+ct_project/Education_
+Platform_Gamified_Lea
+rning/gamified-learni
+ng/backend/src/routes
+/discussionRoutes.js:
+2
+At line:1 char:1
++ node src/index.js 
+2>&1 | Out-File 
+-Encoding UTF8 
+error_utf8.log
++ ~~~~~~~~~~~~~~~~~~~
+~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (file://   
+ /F:/reac...sionR    
+outes.js:2:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+import { 
+authenticate } from '
+../middleware/authMid
+dleware.js';
+         ^^^^^^^^^^^^
+SyntaxError: The 
+requested module '../
+middleware/authMiddle
+ware.js' does not 
+provide an export 
+named 'authenticate'
+    at ModuleJob._ins
+tantiate (node:intern
+al/modules/esm/module
+_job:228:21)
+    at async 
+ModuleJob.run (node:i
+nternal/modules/esm/m
+odule_job:335:5)
+    at async onImport
+.tracePromise.__proto
+__ (node:internal/mod
+ules/esm/loader:647:2
+6)
+    at async asyncRun
+EntryPointWithESMLoad
+er (node:internal/mod
+ules/run_main:117:5)
+
+Node.js v22.18.0

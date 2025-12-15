@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import useLesson from '../hooks/useLesson.js';
 import { useAuthContext } from '../context/AuthContext.jsx';
 import useApi from '../hooks/useApi.js';
+import Breadcrumb from '../components/Breadcrumb.jsx';
 
 const Lesson = () => {
   const { id } = useParams();
@@ -17,8 +18,18 @@ const Lesson = () => {
     setStatus(`Nice! ${result.completedLessons}/${result.totalLessons} lessons done.`);
   };
 
+  // Build breadcrumb items
+  const breadcrumbItems = [
+    { label: 'Courses', path: '/courses' },
+    ...(lesson.module?.course ? [
+      { label: lesson.module.course.title || 'Course', path: `/courses/${lesson.module.course._id || lesson.module.course}` }
+    ] : []),
+    { label: lesson.title, path: `/lessons/${id}`, isCurrent: true }
+  ];
+
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-8">
+      <Breadcrumb items={breadcrumbItems} />
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Lesson</p>
         <h2 className="text-3xl font-bold">{lesson.title}</h2>

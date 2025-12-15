@@ -5,6 +5,10 @@ const lessonProgressSchema = new mongoose.Schema({
   completed: { type: Boolean, default: false }
 });
 
+// Progress Model
+// Granular tracking of what a student has done in a course.
+// Which lessons did they finish? What did they score on related quizzes?
+
 const progressSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
