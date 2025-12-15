@@ -26,8 +26,7 @@ const Navbar = () => {
 
   const navLinks = [
     { to: '/courses', label: 'Courses', icon: BookOpen },
-    { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
-    { to: '/profile', label: 'Profile', icon: User }
+    { to: '/leaderboard', label: 'Leaderboard', icon: Trophy }
   ];
 
   return (

@@ -1,12 +1,11 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Trophy, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Trophy } from 'lucide-react';
 
 const navItems = [
   { to: '/teacher/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/teacher/batches', label: 'Batches', icon: Users },
   { to: '/teacher/quizzes', label: 'Quizzes', icon: FileText },
-  { to: '/teacher/leaderboard', label: 'Leaderboard', icon: Trophy },
-  { to: '/teacher/settings', label: 'Settings', icon: Settings }
+  { to: '/teacher/leaderboard', label: 'Leaderboard', icon: Trophy }
 ];
 
 const TeacherSidebar = () => {
