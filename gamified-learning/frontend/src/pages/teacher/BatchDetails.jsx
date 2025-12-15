@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Users, Plus, X, Trophy, User } from 'lucide-react';
+import { Users, Plus, X, Trophy, User, Copy, Check } from 'lucide-react';
 import api from '../../api/index.js';
 
 const BatchDetails = () => {
@@ -13,6 +13,7 @@ const BatchDetails = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     fetchBatch();
@@ -66,6 +67,14 @@ const BatchDetails = () => {
       await fetchBatch();
     } catch (err) {
       alert('Failed to remove student');
+    }
+  };
+
+  const copyInviteCode = () => {
+    if (batch?.inviteCode) {
+      navigator.clipboard.writeText(batch.inviteCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -172,6 +181,29 @@ const BatchDetails = () => {
 
         {/* Batch Info */}
         <div className="space-y-6">
+          {/* Invite Code Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-accent/10 p-5 shadow-glass-card"
+          >
+            <h3 className="text-lg font-semibold text-white mb-2">Share Invite Code</h3>
+            <p className="text-xs text-slate-400 mb-4">Students can join this batch using this code</p>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 rounded-xl border border-white/20 bg-black/40 px-4 py-3 text-center font-mono text-xl tracking-widest text-white">
+                {batch.inviteCode || 'N/A'}
+              </div>
+              <button
+                onClick={copyInviteCode}
+                className={`p-3 rounded-xl transition ${copied ? 'bg-emerald-500/20 text-emerald-300' : 'bg-white/10 text-slate-300 hover:bg-white/20'}`}
+                title="Copy invite code"
+              >
+                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+              </button>
+            </div>
+            {copied && <p className="text-xs text-emerald-400 mt-2 text-center">Copied to clipboard!</p>}
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

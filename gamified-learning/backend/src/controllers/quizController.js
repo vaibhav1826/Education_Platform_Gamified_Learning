@@ -4,6 +4,12 @@ import Submission from '../models/Submission.js';
 import Notification from '../models/Notification.js';
 import { emitToUser, emitToBatch, emitToRole } from '../utils/socket.js';
 
+// Quiz Controller
+// Managing the lifecycle of a Quiz: Creation -> Assignment -> taking it.
+// Teachers create them, we distribute them to batches.
+
+// Create a new Quiz
+// We can assign it to batches immediately or save it for later.
 export const createQuiz = async (req, res) => {
   const { title, instructions, questions, assignedBatches, scheduledAt, timeLimit } = req.body;
 
@@ -18,6 +24,7 @@ export const createQuiz = async (req, res) => {
     isActive: true
   });
 
+  // Real-time: Notify everyone plugged into the socket!
   emitToUser(req.user._id.toString(), 'quiz:created', quiz);
   if (assignedBatches && assignedBatches.length > 0) {
     const batches = await Batch.find({ _id: { $in: assignedBatches } });
@@ -72,6 +79,8 @@ export const updateQuiz = async (req, res) => {
   res.json(quiz);
 };
 
+// Assign Batches
+// Sometimes we create a quiz first and assign it later. This handles that update.
 export const assignQuizBatches = async (req, res) => {
   const { assignedBatches } = req.body;
   const quiz = await Quiz.findOneAndUpdate(
@@ -80,7 +89,8 @@ export const assignQuizBatches = async (req, res) => {
     { new: true }
   );
   if (!quiz) return res.status(404).json({ message: 'Quiz not found' });
-  
+
+  // Notify the newly assigned students
   if (assignedBatches && assignedBatches.length > 0) {
     const batches = await Batch.find({ _id: { $in: assignedBatches } });
     batches.forEach((batch) => {

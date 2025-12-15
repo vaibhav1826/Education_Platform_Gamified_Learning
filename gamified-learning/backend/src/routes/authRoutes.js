@@ -1,6 +1,6 @@
 ﻿import { Router } from 'express';
 import { celebrate, Joi, Segments } from 'celebrate';
-import { signup, login, googleAuth, refresh, logout, me, seedBadges, forgotPassword, resetPassword } from '../controllers/authController.js';
+import { signup, login, refresh, logout, me, seedBadges, forgotPassword, resetPassword } from '../controllers/authController.js';
 import { protect, authorize, refreshGuard } from '../middleware/authMiddleware.js';
 
 const router = Router();
@@ -16,7 +16,7 @@ router.post(
       role: roleValidator.required(),
       city: Joi.string().max(120).allow('', null),
       phone: Joi.string().max(32).allow('', null),
-      avatar: Joi.string().uri().max(500).allow('', null),
+      avatar: Joi.string().max(500).allow('', null),
       profileImage: Joi.string().max(500).allow('', null),
       // role-specific requirements are enforced in the controller to avoid
       // Joi.when()/schema callback incompatibility across versions.
@@ -40,16 +40,7 @@ router.post(
   login
 );
 
-router.post(
-  '/google',
-  celebrate({
-    [Segments.BODY]: Joi.object({
-      credential: Joi.string().required(),
-      role: roleValidator
-    })
-  }),
-  googleAuth
-);
+
 router.post('/refresh', refreshGuard, refresh);
 router.post('/logout', protect, logout);
 router.get('/me', protect, me);

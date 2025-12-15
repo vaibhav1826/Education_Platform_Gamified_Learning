@@ -1,5 +1,6 @@
 ﻿import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import useGamification from '../hooks/useGamification.js';
 import useCourses from '../hooks/useCourses.js';
 import useLeaderboardData from '../hooks/useLeaderboardData.js';
@@ -15,25 +16,25 @@ const StudentDashboard = () => {
   const { subscribe } = useSocket();
   const { courses } = useCourses();
   const { leaders } = useLeaderboardData();
-  const { user, requirements } = useGamification();
+  const { user, requirements, progress } = useGamification();
   const { data: analytics } = useAnalytics('student');
   const [assignedTests, setAssignedTests] = useState([]);
   const [batches, setBatches] = useState([]);
   const [recentAnnouncements, setRecentAnnouncements] = useState([]);
 
   const load = useCallback(async () => {
-      try {
-        const [testsRes, batchesRes, announcementRes] = await Promise.all([
-          api.get('/student/quizzes/assigned'),
-          api.get('/student/batches'),
-          api.get('/student/announcements?limit=5')
-        ]);
-        setAssignedTests(testsRes.data || []);
-        setBatches(batchesRes.data || []);
-        setRecentAnnouncements(announcementRes.data || []);
-      } catch (err) {
-        console.error('Dashboard fetch failed', err);
-      }
+    try {
+      const [testsRes, batchesRes, announcementRes] = await Promise.all([
+        api.get('/student/quizzes/assigned'),
+        api.get('/student/batches'),
+        api.get('/student/announcements?limit=5')
+      ]);
+      setAssignedTests(testsRes.data || []);
+      setBatches(batchesRes.data || []);
+      setRecentAnnouncements(announcementRes.data || []);
+    } catch (err) {
+      console.error('Dashboard fetch failed', err);
+    }
   }, [api]);
 
   useEffect(() => {
@@ -83,7 +84,7 @@ const StudentDashboard = () => {
         className="glass-panel relative overflow-hidden rounded-3xl border border-white/10 p-8 shadow-glass-card"
       >
         <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-b from-primary/10 via-transparent to-accent/10 blur-3xl" aria-hidden />
-        <div className="relative grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <div className="relative grid gap-6">
           <div className="space-y-6">
             <div>
               <p className="text-sm uppercase tracking-[0.5em] text-slate-400">Welcome back</p>
@@ -103,34 +104,7 @@ const StudentDashboard = () => {
               ))}
             </div>
           </div>
-          <div className="space-y-4 rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-6">
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Live Mission</p>
-            <h3 className="text-2xl font-semibold">Master Neural Algorithms</h3>
-            <p className="text-sm text-slate-300">Complete 3 more quantum puzzles to unlock the Lumina badge set.</p>
-            <div className="relative mt-4 h-40 w-full overflow-hidden rounded-2xl border border-white/5 bg-black/30">
-              <svg className="absolute inset-0 h-full w-full" viewBox="0 0 260 160" fill="none" strokeWidth="2">
-                <defs>
-                  <linearGradient id="chart" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#8b5cf6" />
-                    <stop offset="50%" stopColor="#22d3ee" />
-                    <stop offset="100%" stopColor="#fb7185" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M10 120 C 60 60, 110 140, 160 70 S 240 40, 250 100"
-                  stroke="url(#chart)"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="animate-[dash_6s_ease-in-out_infinite] [stroke-dasharray:420] [stroke-dashoffset:420]"
-                />
-                <circle cx="160" cy="70" r="5" fill="#22d3ee" className="animate-pulse" />
-                <circle cx="250" cy="100" r="6" fill="#fb7185" className="animate-pulse" />
-              </svg>
-              <div className="absolute bottom-3 left-3 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
-                Performance Pulse
-              </div>
-            </div>
-          </div>
+
         </div>
       </motion.section>
 
@@ -169,18 +143,18 @@ const StudentDashboard = () => {
             <div className="glass-panel rounded-2xl border border-white/10 p-5 space-y-3">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Quick links</p>
               <div className="flex flex-wrap gap-2">
-                <a href="/student/tests" className="rounded-full bg-white/5 px-3 py-1 text-xs hover:bg-primary/20">
+                <Link to="/student/tests" className="rounded-full bg-white/5 px-3 py-1 text-xs hover:bg-primary/20">
                   Tests
-                </a>
-                <a href="/student/batches" className="rounded-full bg-white/5 px-3 py-1 text-xs hover:bg-primary/20">
+                </Link>
+                <Link to="/student/batches" className="rounded-full bg-white/5 px-3 py-1 text-xs hover:bg-primary/20">
                   Batches
-                </a>
-                <a href="/student/leaderboard" className="rounded-full bg-white/5 px-3 py-1 text-xs hover:bg-primary/20">
+                </Link>
+                <Link to="/student/leaderboard" className="rounded-full bg-white/5 px-3 py-1 text-xs hover:bg-primary/20">
                   Leaderboard
-                </a>
-                <a href="/student/courses" className="rounded-full bg-white/5 px-3 py-1 text-xs hover:bg-primary/20">
+                </Link>
+                <Link to="/student/courses" className="rounded-full bg-white/5 px-3 py-1 text-xs hover:bg-primary/20">
                   Courses
-                </a>
+                </Link>
               </div>
               <div className="mt-2 h-16 rounded-xl bg-gradient-to-r from-primary/10 via-accent/10 to-emerald-400/10 p-[1px]">
                 <div className="h-full rounded-[14px] bg-black/70" />
@@ -234,6 +208,55 @@ const StudentDashboard = () => {
 
         <div className="space-y-6">
           <LeaderboardWidget data={leaders} />
+
+          {/* Certificates Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="glass-panel rounded-3xl border border-white/10 p-5 space-y-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-500/20 text-xl text-yellow-500">
+                🏆
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Certificates</p>
+                <h3 className="text-lg font-semibold">Your Achievements</h3>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {progress?.filter(p => p.completed || p.completionPct === 100).length > 0 ? (
+                progress.filter(p => p.completed || p.completionPct === 100).map((p) => (
+                  <div key={p._id} className="group relative overflow-hidden rounded-xl border border-white/5 bg-white/5 p-4 transition-all hover:bg-white/10">
+                    <div className="relative z-10 flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold">{p.course?.title || 'Course Completion'}</p>
+                        <p className="text-xs text-slate-400">Completed on {new Date(p.updatedAt).toLocaleDateString()}</p>
+                      </div>
+                      <button
+                        onClick={() => alert(`Downloading certificate for ${p.course?.title}...`)}
+                        className="rounded-full bg-white/10 p-2 text-white hover:bg-primary hover:text-black transition-colors"
+                        title="Download Certificate"
+                      >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </button>
+                    </div>
+                    {/* Shine effect */}
+                    <div className="absolute inset-0 -translate-x-[100%] bg-gradient-to-r from-transparent via-white/5 to-transparent transition-transform duration-1000 group-hover:translate-x-[100%]" />
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-xl border border-dashed border-white/10 p-6 text-center">
+                  <p className="text-sm text-slate-500">Complete courses to earn certificates!</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -253,7 +276,7 @@ const StudentDashboard = () => {
           </motion.div>
         </div>
       </div>
-    </main>
+    </main >
   );
 };
 

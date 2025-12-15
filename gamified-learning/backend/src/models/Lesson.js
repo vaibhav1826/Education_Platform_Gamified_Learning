@@ -10,6 +10,10 @@ const attachmentSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Lesson Model
+// The actual content pages.
+// Can be a video, a reading article, or even an assignment.
+
 const lessonSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },

@@ -10,6 +10,13 @@ import Notification from '../models/Notification.js';
 import Settings from '../models/Settings.js';
 import { emitToUser, emitToBatch, emitToRole } from '../utils/socket.js';
 
+// Student Controller
+// Handles specific logic for the Student learning experience.
+// From viewing batches to taking quizzes and tracking progress. 
+
+// Helper: Formats quiz data based on its schedule and student's attempt status.
+// Uses "active", "upcoming", or "completed" states.
+
 const buildQuizStatus = (quiz, submission) => {
   const now = new Date();
   const start = quiz.scheduledAt ? new Date(quiz.scheduledAt) : null;
@@ -30,6 +37,7 @@ const buildQuizStatus = (quiz, submission) => {
   };
 };
 
+// Helper: Security check to ensure a student only accesses Batches they belong to.
 const ensureBatchAccess = async (batchId, userId) => {
   const batch = await Batch.findById(batchId).populate('teacher', 'name email profileImage').populate('students', 'name profileImage');
   if (!batch) return null;
@@ -44,6 +52,9 @@ export const getStudentBatches = async (req, res) => {
   res.json(batches);
 };
 
+// -------- Batch Dashboard ----------
+// Gets the main dashboard for a specific batch.
+// Aggregates Quizzes, Assignments, Announcements, and Leaderboards in one go.
 export const getStudentBatch = async (req, res) => {
   const batch = await ensureBatchAccess(req.params.id, req.user._id);
   if (!batch || batch.disabled) return res.status(404).json({ message: 'Batch not found' });
@@ -104,17 +115,23 @@ export const getBatchLeaderboardForStudent = async (req, res) => {
     { $sort: { totalScore: -1 } }
   ]);
 
-  const users = await User.find({ _id: { $in: leaderboard.map((l) => l._id) } }).select('name profileImage xp level');
+  const users = await User.find({ _id: { $in: leaderboard.map((l) => l._id) }, role: 'student' }).select('name profileImage xp level');
+  const studentIds = new Set(users.map(u => u._id.toString()));
+
   res.json(
-    leaderboard.map((entry, idx) => ({
-      rank: idx + 1,
-      student: users.find((u) => u._id.toString() === entry._id.toString()),
-      totalScore: entry.totalScore,
-      totalQuestions: entry.totalQuestions
-    }))
+    leaderboard
+      .filter(l => studentIds.has(l._id.toString()))
+      .map((entry, idx) => ({
+        rank: idx + 1,
+        student: users.find((u) => u._id.toString() === entry._id.toString()),
+        totalScore: entry.totalScore,
+        totalQuestions: entry.totalQuestions
+      }))
   );
 };
 
+// -------- Quiz Handling ----------
+// Fetches all quizzes assigned to the student's batches.
 export const getAssignedQuizzes = async (req, res) => {
   const batchIds = await Batch.find({ students: req.user._id }).distinct('_id');
   if (!batchIds.length) return res.json([]);
@@ -137,6 +154,8 @@ export const getStudentQuiz = async (req, res) => {
   res.json(buildQuizStatus(quiz, submission));
 };
 
+// Submit a Quiz Attempt
+// Calculates score immediately, updates XP, and notifies the teacher.
 export const submitQuiz = async (req, res) => {
   const { answers, batchId } = req.body;
   if (!batchId) return res.status(400).json({ message: 'batchId is required' });
@@ -231,14 +250,18 @@ export const getGlobalLeaderboardForStudent = async (req, res) => {
     { $sort: { totalScore: -1 } }
   ]);
 
-  const users = await User.find({ _id: { $in: submissions.map((s) => s._id) } }).select('name profileImage xp level');
+  const users = await User.find({ _id: { $in: submissions.map((s) => s._id) }, role: 'student' }).select('name profileImage xp level');
+  const userIds = new Set(users.map(u => u._id.toString()));
+
   res.json(
-    submissions.map((entry, idx) => ({
-      rank: idx + 1,
-      student: users.find((u) => u._id.toString() === entry._id.toString()),
-      totalScore: entry.totalScore,
-      quizAttempts: entry.quizCount
-    }))
+    submissions
+      .filter(entry => userIds.has(entry._id.toString()))
+      .map((entry, idx) => ({
+        rank: idx + 1,
+        student: users.find((u) => u._id.toString() === entry._id.toString()),
+        totalScore: entry.totalScore,
+        quizAttempts: entry.quizCount
+      }))
   );
 };
 
@@ -264,6 +287,9 @@ export const getStudentAnnouncements = async (req, res) => {
   res.json(announcements);
 };
 
+// -------- Course Progress ----------
+// Fetches self-paced courses the student is enrolled in.
+// Merges strictly "enrollment" data with "progress" tracking.
 export const getStudentCourses = async (req, res) => {
   const enrollments = await Enrollment.find({ student: req.user._id })
     .populate({
@@ -305,6 +331,8 @@ export const getStudentCourse = async (req, res) => {
   });
 };
 
+// -------- Profile & Stats ----------
+// Aggregates user profile data with gamification stats (Badges, XP).
 export const getStudentProfile = async (req, res) => {
   const user = await User.findById(req.user._id).populate('badges');
   const batches = await Batch.find({ students: req.user._id }).select('name teacher').populate('teacher', 'name profileImage');
@@ -342,3 +370,53 @@ export const getStudentNotifications = async (req, res) => {
   res.json(notifications);
 };
 
+export const joinBatchByCode = async (req, res) => {
+  const { inviteCode } = req.body;
+
+  if (!inviteCode || inviteCode.trim().length < 4) {
+    return res.status(400).json({ message: 'Invalid invite code' });
+  }
+
+  const batch = await Batch.findOne({
+    inviteCode: inviteCode.trim().toUpperCase(),
+    disabled: { $ne: true }
+  }).populate('teacher', 'name profileImage email');
+
+  if (!batch) {
+    return res.status(404).json({ message: 'Batch not found. Please check the invite code.' });
+  }
+
+  if (!batch.allowSelfEnroll) {
+    return res.status(403).json({ message: 'This batch does not allow self-enrollment. Contact the teacher.' });
+  }
+
+  // Check if student is already in the batch
+  if (batch.students.some(s => s.toString() === req.user._id.toString())) {
+    return res.status(400).json({ message: 'You are already a member of this batch.' });
+  }
+
+  // Add student to batch
+  batch.students.push(req.user._id);
+  await batch.save();
+
+  const updated = await Batch.findById(batch._id)
+    .populate('teacher', 'name profileImage email')
+    .populate('students', 'name profileImage');
+
+  // Emit real-time events
+  emitToUser(req.user._id.toString(), 'batch:joined', updated);
+  emitToBatch(batch._id.toString(), 'batch:updated', updated);
+  emitToUser(batch.teacher._id.toString(), 'batch:studentJoined', { batch: updated, student: req.user });
+
+  // Create notification for teacher
+  await Notification.create({
+    user: batch.teacher._id,
+    type: 'system',
+    title: 'New Student Joined',
+    message: `${req.user.name} has joined batch "${batch.name}"`,
+    meta: { batchId: batch._id, studentId: req.user._id }
+  });
+  emitToUser(batch.teacher._id.toString(), 'notification:new', { type: 'student_joined' });
+
+  res.json(updated);
+};

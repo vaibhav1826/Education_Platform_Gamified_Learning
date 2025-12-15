@@ -2,6 +2,7 @@
 import { useParams, Link } from 'react-router-dom';
 import useCourse from '../hooks/useCourse.js';
 import DiscussionList from '../components/discussion/DiscussionList.jsx';
+import Breadcrumb from '../components/Breadcrumb.jsx';
 
 const CoursePage = () => {
   const { id } = useParams();
@@ -17,8 +18,15 @@ const CoursePage = () => {
     setEnrolling(false);
   };
 
+  // Breadcrumb items for this course
+  const breadcrumbItems = [
+    { label: 'Courses', path: '/courses' },
+    { label: course.title, path: `/courses/${id}`, isCurrent: true }
+  ];
+
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
+      <Breadcrumb items={breadcrumbItems} />
       <header className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-glass-card">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>

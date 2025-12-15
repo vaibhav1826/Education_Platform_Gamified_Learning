@@ -1,12 +1,76 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { Trophy, Medal, Award, Crown, TrendingUp, Loader2 } from 'lucide-react';
+import { Trophy, Medal, Award, Crown, TrendingUp, Loader2, Calendar, Filter, Users } from 'lucide-react';
 import useLeaderboardData from '../hooks/useLeaderboardData.js';
+import useApi from '../hooks/useApi.js';
+import { useAuthContext } from '../context/AuthContext.jsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Leaderboard = () => {
-  const { leaders, loading, error } = useLeaderboardData();
+  const { leaders: globalLeaders, loading, error } = useLeaderboardData();
+  const api = useApi();
+  const { user } = useAuthContext();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [hoveredId, setHoveredId] = useState(null);
+  const [timePeriod, setTimePeriod] = useState('all');
+  const [selectedBatch, setSelectedBatch] = useState('all');
+  const [batches, setBatches] = useState([]);
+  const [batchLeaders, setBatchLeaders] = useState(null);
+  const [loadingBatches, setLoadingBatches] = useState(false);
+
+  const timePeriods = [
+    { id: 'week', label: 'This Week' },
+    { id: 'month', label: 'This Month' },
+    { id: 'all', label: 'All Time' }
+  ];
+
+  // Fetch user's batches on mount
+  useEffect(() => {
+    const fetchBatches = async () => {
+      if (user?.role === 'student') {
+        try {
+          const { data } = await api.get('/student/batches');
+          setBatches(data || []);
+        } catch (err) {
+          console.error('Failed to load batches:', err);
+        }
+      } else if (user?.role === 'teacher') {
+        try {
+          const { data } = await api.get('/teacher/batches');
+          setBatches(data || []);
+        } catch (err) {
+          console.error('Failed to load batches:', err);
+        }
+      }
+    };
+    fetchBatches();
+  }, [user]);
+
+  // Fetch batch leaderboard when batch is selected
+  useEffect(() => {
+    const fetchBatchLeaderboard = async () => {
+      if (selectedBatch === 'all') {
+        setBatchLeaders(null);
+        return;
+      }
+      setLoadingBatches(true);
+      try {
+        const endpoint = user?.role === 'teacher'
+          ? `/teacher/batches/${selectedBatch}/leaderboard`
+          : `/student/batches/${selectedBatch}/leaderboard`;
+        const { data } = await api.get(endpoint);
+        setBatchLeaders(data || []);
+      } catch (err) {
+        console.error('Failed to load batch leaderboard:', err);
+        setBatchLeaders([]);
+      } finally {
+        setLoadingBatches(false);
+      }
+    };
+    fetchBatchLeaderboard();
+  }, [selectedBatch, user]);
+
+  // Use batch leaders if batch selected, otherwise global
+  const leaders = selectedBatch !== 'all' && batchLeaders !== null ? batchLeaders : globalLeaders;
 
   useEffect(() => {
     if (leaders && leaders.length > 0) {
@@ -119,7 +183,7 @@ const Leaderboard = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16 space-y-6"
+          className="text-center mb-12 space-y-6"
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -144,9 +208,64 @@ const Leaderboard = () => {
               transition={{ delay: 0.4 }}
               className="text-slate-400 text-xl mt-4"
             >
-              Top performers this season
+              Top performers {timePeriod === 'week' ? 'this week' : timePeriod === 'month' ? 'this month' : 'of all time'}
             </motion.p>
           </div>
+        </motion.div>
+
+        {/* Time Period Filter */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="flex flex-wrap items-center justify-center gap-4 mb-12"
+        >
+          {/* Time Period */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-sm text-slate-400 mr-2">
+              <Calendar className="w-4 h-4" />
+              <span>Time:</span>
+            </div>
+            <div className="flex items-center gap-2 p-1 rounded-xl bg-slate-900/50 border border-white/10 backdrop-blur-sm">
+              {timePeriods.map((period) => (
+                <button
+                  key={period.id}
+                  onClick={() => setTimePeriod(period.id)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${timePeriod === period.id
+                    ? 'bg-gradient-to-r from-purple-500 to-cyan-500 text-white shadow-lg shadow-purple-500/25'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                >
+                  {period.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Batch Filter */}
+          {batches.length > 0 && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-sm text-slate-400 mr-2">
+                <Users className="w-4 h-4" />
+                <span>Batch:</span>
+              </div>
+              <select
+                value={selectedBatch}
+                onChange={(e) => setSelectedBatch(e.target.value)}
+                className="px-4 py-2 rounded-xl bg-slate-900/50 border border-white/10 backdrop-blur-sm text-white text-sm focus:outline-none focus:border-purple-500 transition-all cursor-pointer"
+              >
+                <option value="all">All Batches</option>
+                {batches.map((batch) => (
+                  <option key={batch._id} value={batch._id}>
+                    {batch.name}
+                  </option>
+                ))}
+              </select>
+              {loadingBatches && (
+                <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
+              )}
+            </div>
+          )}
         </motion.div>
 
         {/* Top 3 Podium */}
@@ -181,12 +300,12 @@ const Leaderboard = () => {
                   >
                     <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${idx === 0 ? 'from-yellow-400 to-amber-600 ring-4 ring-yellow-500/30' :
-                        idx === 1 ? 'from-slate-300 to-slate-500 ring-4 ring-slate-400/30' :
-                          'from-amber-600 to-amber-800 ring-4 ring-amber-600/30'
+                      idx === 1 ? 'from-slate-300 to-slate-500 ring-4 ring-slate-400/30' :
+                        'from-amber-600 to-amber-800 ring-4 ring-amber-600/30'
                       } flex items-center justify-center text-3xl font-bold text-white shadow-2xl relative z-10 overflow-hidden`}>
                       {leader.user?.profileImage || leader.user?.avatar ? (
                         <img
-                          src={(leader.user.profileImage || leader.user.avatar).startsWith('http') 
+                          src={(leader.user.profileImage || leader.user.avatar).startsWith('http')
                             ? (leader.user.profileImage || leader.user.avatar)
                             : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${leader.user.profileImage || leader.user.avatar}`}
                           alt={leader.user?.name}
@@ -268,9 +387,9 @@ const Leaderboard = () => {
 
                         <div className="flex items-center gap-4">
                           <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${idx === 0 ? 'from-yellow-400 to-amber-600' :
-                              idx === 1 ? 'from-slate-400 to-slate-600' :
-                                idx === 2 ? 'from-amber-600 to-amber-800' :
-                                  'from-blue-500 to-purple-600'
+                            idx === 1 ? 'from-slate-400 to-slate-600' :
+                              idx === 2 ? 'from-amber-600 to-amber-800' :
+                                'from-blue-500 to-purple-600'
                             } flex items-center justify-center text-lg font-bold text-white shadow-lg overflow-hidden`}>
                             {leader.user?.profileImage || leader.user?.avatar ? (
                               <img

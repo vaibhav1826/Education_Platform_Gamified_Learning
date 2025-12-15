@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticate } from '../middleware/authMiddleware.js';
+import { protect } from '../middleware/authMiddleware.js';
 import {
     createThread,
     getCourseThreads,
@@ -10,7 +10,7 @@ import {
 
 const router = express.Router();
 
-router.use(authenticate);
+router.use(protect);
 
 router.post('/', createThread);
 router.get('/course/:courseId', getCourseThreads);

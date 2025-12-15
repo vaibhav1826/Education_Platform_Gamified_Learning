@@ -1,5 +1,5 @@
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useMemo, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import useCourses from '../hooks/useCourses.js';
 import useAnalytics from '../hooks/useAnalytics.js';
@@ -25,7 +25,7 @@ const TeacherDashboard = () => {
     () => [
       { label: 'Active Courses', value: courses.length },
       { label: 'Total Students', value: analytics?.stats?.reduce((sum, entry) => sum + (entry.totalStudents || 0), 0) || 0 },
-      { label: 'Avg Progress', value: `${averageProgress}%` }
+      { label: 'Avg Progress', value: `${averageProgress}% ` }
     ],
     [courses.length, analytics, averageProgress]
   );
@@ -61,7 +61,7 @@ const TeacherDashboard = () => {
     });
     await Promise.all(
       quizForm.questions.map((question) =>
-        api.post(`/quizzes/${quiz._id}/questions`, {
+        api.post(`/ quizzes / ${quiz._id}/questions`, {
           prompt: question.prompt,
           type: question.type,
           options: question.type === 'mcq' ? question.options : [],

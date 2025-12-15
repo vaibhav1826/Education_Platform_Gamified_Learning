@@ -3,6 +3,7 @@ import { protect, authorize } from '../middleware/authMiddleware.js';
 import {
   getStudentBatches,
   getStudentBatch,
+  joinBatchByCode,
   getAssignedQuizzes,
   getStudentQuiz,
   submitQuiz,
@@ -24,6 +25,7 @@ router.use(protect);
 router.use(authorize('student'));
 
 router.get('/batches', getStudentBatches);
+router.post('/batches/join', joinBatchByCode);
 router.get('/batches/:id', getStudentBatch);
 router.get('/batches/:id/leaderboard', getBatchLeaderboardForStudent);
 

@@ -1,0 +1,24 @@
+﻿node : [31mMongo 
+connection 
+error:[0m options 
+usenewurlparser, 
+useunifiedtopology 
+are not supported
+At line:1 char:1
++ node src/index.js 
+2>&1 | Out-File 
+-Encoding UTF8 
+error_utf8_2.log
++ ~~~~~~~~~~~~~~~~~~~
+~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: ([31mMo   
+ ngo conn...e not    
+ supported:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 

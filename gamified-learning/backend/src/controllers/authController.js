@@ -1,4 +1,4 @@
-﻿import { OAuth2Client } from 'google-auth-library';
+﻿
 import validator from 'validator';
 import crypto from 'crypto';
 import User from '../models/User.js';
@@ -7,18 +7,26 @@ import { generateTokens, attachRefreshToken, clearRefreshToken } from '../utils/
 import { applyGamificationEvent } from '../utils/gamification.js';
 import { sendMail } from '../utils/email.js';
 
+// Authentication Controller
+// This controller handles all user authentication flows including:
+// 1. Traditional Email/Password Signup & Login
+// 2. JWT Token Management (Access + Refresh Tokens)
+// 3. Password Reset flows
+
 const ROLE_OPTIONS = ['student', 'teacher', 'admin'];
 const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || 'dev-admin-secret';
-const googleClientId = process.env.GOOGLE_CLIENT_ID;
-const googleClient = googleClientId ? new OAuth2Client(googleClientId) : null;
 
+// Helper: standardize email storage to lowercase to prevent duplicates
 const normalizeEmail = (email = '') => email.trim().toLowerCase();
 
+// Helper: formatting the response to send back to the client
+// We purposefully exclude sensitive data like passwords (handled by safeObject)
 const buildAuthResponse = (user, tokens) => ({
   user: user.safeObject ? user.safeObject() : user,
   ...tokens
 });
 
+// Helper: Ensure the requested role is valid to prevent injection of unknown roles
 const assertRoleSelection = (role) => {
   if (!ROLE_OPTIONS.includes(role)) {
     const error = new Error(`Role must be one of: ${ROLE_OPTIONS.join(', ')}`);
@@ -27,19 +35,34 @@ const assertRoleSelection = (role) => {
   }
 };
 
+/**
+ * SIGNUP HANDLER
+ * Creates a new user account.
+ * 
+ * Logic Flow:
+ * 1. Validate role-specific requirements (Teachers need specialization, Admins need secret key).
+ * 2. Enforce strong password policies for security.
+ * 3. Check if email already exists to prevent duplicates.
+ * 4. Create user in DB (Password hashing happens in User model pre-save hook).
+ * 5. Generate JWT tokens and attach refresh token to HTTP-only cookie.
+ * 6. Award 'daily_login' XP immediately to encourage engagement.
+ */
 export const signup = async (req, res) => {
   const { name, email, password, role, city, phone, avatar, profileImage, specialization, experience, secretKey } =
     req.body;
   assertRoleSelection(role);
 
+  // Security: Enforce minimum length
   if (!password || password.length < 8) {
     return res.status(400).json({ message: 'Password must be at least 8 characters.' });
   }
 
+  // Security: Enforce complexity (Upper, Lower, Numbers)
   if (!validator.isStrongPassword(password, { minSymbols: 0 })) {
     return res.status(400).json({ message: 'Password must include upper, lower case letters and numbers.' });
   }
 
+  // Teacher Validation: specific fields required for teacher profile quality
   if (role === 'teacher') {
     if (!specialization || typeof specialization !== 'string') {
       return res.status(400).json({ message: 'Specialization is required for teachers.' });
@@ -49,6 +72,7 @@ export const signup = async (req, res) => {
     }
   }
 
+  // Admin Security: Verify secret key to prevent unauthorized admin creation
   if (role === 'admin') {
     if (!secretKey || secretKey !== ADMIN_SECRET) {
       return res.status(403).json({ message: 'Invalid admin secret key.' });
@@ -58,7 +82,7 @@ export const signup = async (req, res) => {
   const normalizedEmail = normalizeEmail(email);
   const existing = await User.findOne({ email: normalizedEmail });
   if (existing) {
-    return res.status(409).json({ message: 'Account already exists. Use login or Google sign-in.' });
+    return res.status(409).json({ message: 'Account already exists.' });
   }
 
   const image = (profileImage || avatar)?.trim();
@@ -72,85 +96,69 @@ export const signup = async (req, res) => {
     phone: phone?.trim() || undefined,
     specialization: specialization?.trim() || undefined,
     experience: experience !== undefined && experience !== null ? Number(experience) : undefined,
-    avatar: image || undefined,
+    avatar: image || undefined, // Support both naming conventions
     profileImage: image || undefined,
-    authProvider: 'credentials'
   });
 
+  // Authentication success setup
   const tokens = generateTokens(user);
   await attachRefreshToken(res, user, tokens.refreshToken);
+
+  // Gamification: Give them a warm welcome with some XP!
   await applyGamificationEvent(user, 'daily_login');
+
   res.status(201).json(buildAuthResponse(user, tokens));
 };
 
+/**
+ * LOGIN HANDLER
+ * Authenticates an existing user.
+ * 
+ * Logic Flow:
+ * 1. Find user by email.
+ * 2. Verify password using bcrypt (via user.matchPassword).
+ * 3. Verify role matches (prevent a student from logging in as a teacher if they somehow have both).
+ * 4. Check if account is active.
+ * 5. Issue new tokens.
+ */
 export const login = async (req, res) => {
   const { email, password, role } = req.body;
   assertRoleSelection(role);
 
+  // 1. Fetch user + badges (for frontend display)
   const user = await User.findOne({ email: normalizeEmail(email) }).populate('badges');
+
+  // 2. Validate credentials
   if (!user || !(await user.matchPassword(password))) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
 
+  // 3. Role enforcement
   if (user.role !== role) {
     return res.status(400).json({ message: `Account is registered as ${user.role}. Please switch role.` });
   }
 
+  // 4. Status check
   if (user.status === 'inactive') {
     return res.status(403).json({ message: 'Account inactive. Contact admin.' });
   }
 
-  if (user.authProvider !== 'credentials') {
-    return res.status(400).json({ message: 'Use Google sign-in for this account.' });
-  }
-
+  // 5. Success - Award daily login XP and generate tokens
   await applyGamificationEvent(user, 'daily_login');
   const tokens = generateTokens(user);
   await attachRefreshToken(res, user, tokens.refreshToken);
   res.json(buildAuthResponse(user, tokens));
 };
 
-export const googleAuth = async (req, res) => {
-  if (!googleClient) {
-    return res.status(500).json({ message: 'Google OAuth not configured.' });
-  }
-  const { credential, role } = req.body;
-  if (!credential) {
-    return res.status(400).json({ message: 'Missing Google credential.' });
-  }
 
-  const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: googleClientId });
-  const payload = ticket.getPayload();
-  const normalizedEmail = normalizeEmail(payload.email);
-  let user = await User.findOne({ email: normalizedEmail }).populate('badges');
 
-  if (user) {
-    if (user.authProvider !== 'google') {
-      return res.status(400).json({ message: 'This email is tied to password login.' });
-    }
-    if (role && user.role !== role) {
-      return res.status(409).json({ message: `Account already registered as ${user.role}.` });
-    }
-  } else {
-    assertRoleSelection(role);
-    user = await User.create({
-      name: payload.name,
-      email: normalizedEmail,
-      googleId: payload.sub,
-      avatar: payload.picture,
-      profileImage: payload.picture,
-      role,
-      authProvider: 'google'
-    });
-  }
-
-  await applyGamificationEvent(user, 'daily_login');
-  const tokens = generateTokens(user);
-  await attachRefreshToken(res, user, tokens.refreshToken);
-  res.json(buildAuthResponse(user, tokens));
-};
-
+/**
+ * REFRESH TOKEN HANDLER
+ * Uses the HttpOnly cookie's refresh token to issue a new Access Token.
+ * This allows the user to stay logged in without storing the sensitive access token strictly in local storage for long periods.
+ */
 export const refresh = async (req, res) => {
+  // req.user is already populated by the refreshGuard middleware
   const tokens = generateTokens(req.user);
   await attachRefreshToken(res, req.user, tokens.refreshToken);
   res.json(buildAuthResponse(req.user, tokens));
@@ -189,9 +197,7 @@ export const forgotPassword = async (req, res) => {
   }
 
   // Users who signed up with Google can't reset password
-  if (user.authProvider === 'google') {
-    return res.json(successMessage);
-  }
+
 
   // Generate reset token
   const resetToken = crypto.randomBytes(32).toString('hex');

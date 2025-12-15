@@ -6,7 +6,56 @@ import Enrollment from '../models/Enrollment.js';
 
 export const getLesson = async (req, res) => {
   const lesson = await Lesson.findById(req.params.id).populate('quiz').populate('assignment');
+  if (!lesson) return res.status(404).json({ message: 'Lesson not found' });
   res.json(lesson);
+};
+
+// Helper: Ensures teacher owns the course containing this lesson
+const ensureLessonTeacherAccess = async (lessonId, userId) => {
+  const lesson = await Lesson.findById(lessonId);
+  if (!lesson) return null;
+  const module = await ModuleModel.findById(lesson.module);
+  if (!module) return null;
+  const course = await Course.findById(module.course);
+  if (!course || !course.teacher.equals(userId)) return null;
+  return lesson;
+};
+
+export const updateLesson = async (req, res) => {
+  const lesson = await ensureLessonTeacherAccess(req.params.id, req.user._id);
+  if (!lesson) return res.status(404).json({ message: 'Lesson not found or access denied' });
+
+  const { title, content, contentType, attachments, order, durationMinutes } = req.body;
+  const updates = {
+    ...(title && { title: title.trim() }),
+    ...(content !== undefined && { content }),
+    ...(contentType && { contentType }),
+    ...(attachments !== undefined && { attachments }),
+    ...(order !== undefined && { order: Number(order) }),
+    ...(durationMinutes !== undefined && { durationMinutes: Number(durationMinutes) })
+  };
+
+  const updated = await Lesson.findByIdAndUpdate(req.params.id, updates, { new: true })
+    .populate('quiz')
+    .populate('assignment');
+  res.json(updated);
+};
+
+export const deleteLesson = async (req, res) => {
+  const lesson = await ensureLessonTeacherAccess(req.params.id, req.user._id);
+  if (!lesson) return res.status(404).json({ message: 'Lesson not found or access denied' });
+
+  // Remove lesson reference from parent module
+  await ModuleModel.findByIdAndUpdate(lesson.module, { $pull: { lessons: lesson._id } });
+
+  // Delete progress entries for this lesson
+  await Progress.updateMany(
+    {},
+    { $pull: { lessons: { lesson: lesson._id } } }
+  );
+
+  await Lesson.findByIdAndDelete(req.params.id);
+  res.json({ message: 'Lesson deleted' });
 };
 
 export const completeLesson = async (req, res) => {

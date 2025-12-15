@@ -6,6 +6,12 @@ import Announcement from '../models/Announcement.js';
 import Notification from '../models/Notification.js';
 import { emitToUser, emitToBatch, emitToRole, emitToAll } from '../utils/socket.js';
 
+// Teacher Controller
+// Everything a teacher needs: Dashboard stats, Batch management, and Student oversight.
+
+// -------- Dashboard Overview ----------
+// Aggregates stats: Total Students, Quizzes, Average Performance.
+// Also fetches recent activity streams for the "What's Happening" feed.
 export const getDashboard = async (req, res) => {
   const teacherId = req.user._id;
 
@@ -53,6 +59,8 @@ export const getDashboard = async (req, res) => {
   });
 };
 
+// -------- Batch Management ----------
+// Creating, listing, and updating Class Batches.
 export const createBatch = async (req, res) => {
   const { name, description, subject } = req.body;
   const batch = await Batch.create({
@@ -106,6 +114,8 @@ export const deleteBatch = async (req, res) => {
   res.json({ message: 'Batch deleted' });
 };
 
+// -------- Student Management ----------
+// Searching for students to add them to batches manually.
 export const searchStudents = async (req, res) => {
   const { q } = req.query;
   if (!q || q.trim().length < 2) {
@@ -157,6 +167,8 @@ export const removeStudentFromBatch = async (req, res) => {
   res.json(updated);
 };
 
+// -------- Analytics & Leaderboards ----------
+// Generates performance reports for specific batches.
 export const getBatchLeaderboard = async (req, res) => {
   const batch = await Batch.findOne({ _id: req.params.id, teacher: req.user._id });
   if (!batch) return res.status(404).json({ message: 'Batch not found' });
@@ -179,17 +191,20 @@ export const getBatchLeaderboard = async (req, res) => {
   ]);
 
   const studentIds = submissions.map((s) => s._id);
-  const students = await User.find({ _id: { $in: studentIds } }).select('name email profileImage xp level');
+  const students = await User.find({ _id: { $in: studentIds }, role: 'student' }).select('name email profileImage xp level');
+  const validStudentIds = new Set(students.map(s => s._id.toString()));
 
-  const leaderboard = submissions.map((sub) => {
-    const student = students.find((s) => s._id.toString() === sub._id.toString());
-    return {
-      student: student || { name: 'Unknown', email: '', profileImage: '' },
-      totalScore: sub.totalScore,
-      averagePercent: Math.round((sub.avgScore || 0) * 100),
-      quizAttempts: sub.quizCount
-    };
-  });
+  const leaderboard = submissions
+    .filter(sub => validStudentIds.has(sub._id.toString()))
+    .map((sub) => {
+      const student = students.find((s) => s._id.toString() === sub._id.toString());
+      return {
+        student: student,
+        totalScore: sub.totalScore,
+        averagePercent: Math.round((sub.avgScore || 0) * 100),
+        quizAttempts: sub.quizCount
+      };
+    });
 
   res.json(leaderboard);
 };
@@ -213,7 +228,8 @@ export const getGlobalLeaderboard = async (req, res) => {
   ]);
 
   const studentIds = submissions.map((s) => s._id);
-  const students = await User.find({ _id: { $in: studentIds } }).select('name email profileImage xp level role');
+  const students = await User.find({ _id: { $in: studentIds }, role: 'student' }).select('name email profileImage xp level role');
+  const validStudentIds = new Set(students.map(s => s._id.toString()));
 
   const allBatchNames = {};
   for (const batch of batches) {
@@ -223,16 +239,18 @@ export const getGlobalLeaderboard = async (req, res) => {
     });
   }
 
-  const leaderboard = submissions.map((sub, index) => {
-    const student = students.find((s) => s._id.toString() === sub._id.toString());
-    return {
-      rank: index + 1,
-      student: student || { name: 'Unknown', email: '', profileImage: '', xp: 0, level: 1 },
-      batches: allBatchNames[sub._id.toString()] || [],
-      totalScore: sub.totalScore,
-      quizAttempts: sub.quizCount
-    };
-  });
+  const leaderboard = submissions
+    .filter(sub => validStudentIds.has(sub._id.toString()))
+    .map((sub, index) => {
+      const student = students.find((s) => s._id.toString() === sub._id.toString());
+      return {
+        rank: index + 1,
+        student: student,
+        batches: allBatchNames[sub._id.toString()] || [],
+        totalScore: sub.totalScore,
+        quizAttempts: sub.quizCount
+      };
+    });
 
   res.json(leaderboard);
 };

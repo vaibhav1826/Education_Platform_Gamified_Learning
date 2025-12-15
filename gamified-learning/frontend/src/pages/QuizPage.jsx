@@ -1,11 +1,17 @@
 ﻿import { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
+import { AlertTriangle, ArrowLeft, Loader2 } from 'lucide-react';
 import useQuiz from '../hooks/useQuiz.js';
 import useGamification from '../hooks/useGamification.js';
+import { useAuthContext } from '../context/AuthContext.jsx';
 
 const QuizPage = () => {
   const { id } = useParams();
-  const { quiz, answers, timeLeft, status, answerQuestion, submitQuiz } = useQuiz(id);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuthContext();
+  const batchId = location.state?.batchId || null;
+  const { quiz, answers, timeLeft, status, error, answerQuestion, submitQuiz } = useQuiz(id, user?.role || 'student', batchId);
   const { triggerEvent } = useGamification();
   const [result, setResult] = useState(null);
 
@@ -19,11 +25,60 @@ const QuizPage = () => {
   };
 
   const timerPct = useMemo(() => {
-    if (!quiz) return 0;
+    if (!quiz || !quiz.timeLimit) return 0;
     return Math.max(0, Math.round((timeLeft / quiz.timeLimit) * 100));
   }, [quiz, timeLeft]);
 
-  if (!quiz) return <p className="p-6">Loading quiz...</p>;
+  // Error state with helpful UI
+  if (error) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-16">
+        <div className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-500/20 mb-4">
+            <AlertTriangle className="w-8 h-8 text-rose-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Quiz Not Available</h2>
+          <p className="text-slate-400 mb-6">{error}</p>
+          <div className="space-y-3">
+            <p className="text-sm text-slate-500">This could happen because:</p>
+            <ul className="text-sm text-slate-400 text-left list-disc list-inside space-y-1">
+              <li>You're not enrolled in a batch with this quiz</li>
+              <li>The quiz has not been assigned yet</li>
+              <li>The quiz ID is incorrect</li>
+            </ul>
+          </div>
+          <div className="flex justify-center gap-4 mt-6">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl border border-white/10 bg-white/5 text-white hover:bg-white/10 transition"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Go Back
+            </button>
+            <Link
+              to="/student/tests"
+              className="px-5 py-2 rounded-xl bg-primary text-white hover:bg-primary/80 transition"
+            >
+              View My Tests
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (!quiz) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-16 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
+        <h2 className="text-xl font-semibold text-white">Loading Quiz...</h2>
+        <p className="text-slate-400 mt-2">Please wait while we fetch your quiz</p>
+      </div>
+    );
+  }
 
   const renderQuestion = (question) => {
     if (question.type === 'short_answer') {

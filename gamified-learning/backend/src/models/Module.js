@@ -1,5 +1,9 @@
 ﻿import mongoose from 'mongoose';
 
+// Module Model
+// Modules are chapters in the Course book.
+// They organize lessons into logical groups (e.g., "Week 1: Basics").
+
 const moduleSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },

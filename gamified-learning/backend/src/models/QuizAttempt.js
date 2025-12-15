@@ -10,6 +10,10 @@ const responseSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// QuizAttempt Model
+// A specific record of a student taking a quiz.
+// Stores their answers, score, and how long it took them.
+
 const quizAttemptSchema = new mongoose.Schema(
   {
     quiz: { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz', required: true },
